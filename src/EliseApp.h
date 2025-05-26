@@ -10,6 +10,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "../libs/tinyfiledialogs.h"
 #include "WaveformViewer.h"
 #include "AudioManager.h"
 #include <GLFW/glfw3.h>
@@ -26,10 +27,22 @@ public:
 private:
     void draw();
 
+    void draw_menu_bar();
+    void draw_project_manager();
+    void draw_player();
+
+    void update();
+    void update_waveform_viewer();
+
 private:
     GLFWwindow* window;
     WaveformViewer waveform_viewer;
     AudioManager audio_manager;
+
+
+    // Project manager state
+    std::string project_path;
+    bool is_project_manager_visible = false;
 };
 
 

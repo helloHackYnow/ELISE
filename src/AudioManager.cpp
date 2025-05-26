@@ -47,7 +47,7 @@ int AudioManager::getSampleRate() const {
 }
 
 void AudioManager::play(const int start_ms) {
-    if (isPlaying) return;
+    if (is_playing) return;
 
     if (!isDeviceInitialized) {
         initPlaybackDevice();
@@ -57,12 +57,12 @@ void AudioManager::play(const int start_ms) {
     size_t startFrame = size_t(start_ms * sample_rate / 1000.0f);
     playheadPosition = std::min(startFrame, original_samples.size());
 
-    isPlaying = true;
+    is_playing = true;
     ma_device_start(&device);
 }
 
 void AudioManager::pause() {
-    isPlaying = false;
+    is_playing = false;
 }
 
 void AudioManager::stop() {
@@ -70,8 +70,16 @@ void AudioManager::stop() {
         ma_device_uninit(&device);
         isDeviceInitialized = false;
     }
-    isPlaying = false;
+    is_playing = false;
     playheadPosition = 0;
+}
+
+bool AudioManager::isPlaying() const {
+    return is_playing;
+}
+
+size_t AudioManager::getPlayheadPosition() const {
+    return playheadPosition;
 }
 
 void AudioManager::dataCallback(ma_device *pDevice, void *pOutput, const void *pInput, ma_uint32 frameCount) {
@@ -79,7 +87,7 @@ void AudioManager::dataCallback(ma_device *pDevice, void *pOutput, const void *p
     float* out = (float*)pOutput;
     memset(out, 0, frameCount * sizeof(float));
 
-    if (!self->isPlaying) return;
+    if (!self->is_playing) return;
 
     const auto& samples = self->original_samples;
     size_t remaining = samples.size() - self->playheadPosition;
@@ -91,7 +99,7 @@ void AudioManager::dataCallback(ma_device *pDevice, void *pOutput, const void *p
 
     if (framesToCopy < frameCount) {
         // Reached end
-        self->isPlaying = false;
+        self->is_playing = false;
     }
 }
 

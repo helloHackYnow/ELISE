@@ -24,6 +24,10 @@ public:
     void pause();
     void stop();
 
+    bool isPlaying() const;
+
+    size_t getPlayheadPosition() const;
+
 private:
     static void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
     void initPlaybackDevice();
@@ -36,7 +40,7 @@ private:
     ma_device device{};
     bool isDeviceInitialized = false;
 
-    std::atomic<bool> isPlaying{false};
+    std::atomic<bool> is_playing{false};
     std::atomic<uint64_t> playheadPosition{0};
 
 

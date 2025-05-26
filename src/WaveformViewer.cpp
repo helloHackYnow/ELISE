@@ -574,5 +574,18 @@ void WaveformViewer::draw() {
 }
 
 void WaveformViewer::set_cursor_position(float cursor_position) {
+    this->cursor_position = cursor_position;
+}
+
+float WaveformViewer::get_cursor_position() {
+    return cursor_position;
+}
+
+void WaveformViewer::set_sample_rate(float sample_rate) {
+    this->sample_rate = sample_rate;
+}
+
+void WaveformViewer::set_waveform_data(const std::vector<float> waveform_data) {
+    this->waveform_data = waveform_data;
 }
 

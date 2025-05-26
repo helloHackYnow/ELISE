@@ -59,7 +59,12 @@ private:
 public:
     WaveformViewer();
     void draw();
+
     void set_cursor_position(float cursor_position);
+    float get_cursor_position();
+
+    void set_sample_rate(float sample_rate);
+    void set_waveform_data(const std::vector<float> waveform_data);
 
 };
 
