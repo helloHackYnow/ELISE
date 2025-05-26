@@ -7,35 +7,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <iostream>
+#include <thread>
 
-void WaveformViewer::computeEnvelope() {
-    if (waveform_data.empty()) return;
-
-    envelope_data.clear();
-    envelope_data.reserve(waveform_data.size());
-
-    // Calculate window size in samples
-    int window_samples = (int)(envelope_window_ms * 0.001f * sample_rate);
-    window_samples = std::max(1, window_samples);
-
-    // Calculate RMS envelope
-    for (int i = 0; i < waveform_data.size(); ++i) {
-        float sum_squares = 0.0f;
-        int count = 0;
-
-        // Calculate RMS over window centered at current sample
-        int start = std::max(0, i - window_samples / 2);
-        int end = std::min((int)waveform_data.size(), i + window_samples / 2);
-
-        for (int j = start; j < end; ++j) {
-            sum_squares += waveform_data[j] * waveform_data[j];
-            count++;
-        }
-
-        float rms = std::sqrt(sum_squares / count);
-        envelope_data.push_back(rms);
-    }
-}
 
 void WaveformViewer::drawMenuBar() {
     ImGui::BeginMenuBar();
@@ -192,12 +166,45 @@ void WaveformViewer::drawEnvelope(ImDrawList *draw_list, ImVec2 canvas_pos, ImVe
     }
 }
 
+void WaveformViewer::drawNotes(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2 canvas_size) {
+    if (notes.empty()) return;
+
+    auto min_visible_sample = horizontal_offset;
+    auto max_visible_sample = horizontal_offset + canvas_size.x * getSamplesPerPixel();
+
+    int note_idx = get_first_note_at_sample(min_visible_sample);
+
+    while (note_idx < (int)notes.size() && notes[note_idx].start_sample < max_visible_sample) {
+        auto &note = notes[note_idx];
+
+        // Draw note
+        float x_start = sampleToPixel(note.start_sample, canvas_size.x);
+        float x_end = sampleToPixel(note.start_sample + note.duration, canvas_size.x);
+        draw_list->AddRectFilled(ImVec2(canvas_pos.x + x_start, canvas_pos.y + canvas_size.y / 2 - (note.frequency - 20000)/100),
+                               ImVec2(canvas_pos.x + x_end, canvas_pos.y + canvas_size.y / 2),
+                               IM_COL32(255, 255, 255, 180), 2.0f);
+        note_idx++;
+    }
+}
+
 void WaveformViewer::drawCursor(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2 canvas_size) {
     float cursor_x = sampleToPixel(cursor_position, canvas_size.x);
+    static float cursor_tip_width = 9.0f;
+    static float cursor_padding = 5.0f;
+    static auto cursor_color = IM_COL32(255, 0, 0, 180);
     if (cursor_x >= 0 && cursor_x <= canvas_size.x) {
-        draw_list->AddLine(ImVec2(canvas_pos.x + cursor_x, canvas_pos.y),
-                         ImVec2(canvas_pos.x + cursor_x, canvas_pos.y + canvas_size.y),
-                         IM_COL32(255, 255, 0, 200), 2.0f);
+        draw_list->AddLine(ImVec2(canvas_pos.x + cursor_x, canvas_pos.y + cursor_padding),
+                         ImVec2(canvas_pos.x + cursor_x, canvas_pos.y + canvas_size.y - cursor_padding),
+                         cursor_color, 2.0f);
+
+        // Small horizontal lines
+        draw_list->AddLine(ImVec2(canvas_pos.x + cursor_x - cursor_tip_width/2, canvas_pos.y + cursor_padding),
+                            ImVec2(canvas_pos.x + cursor_x + cursor_tip_width/2, canvas_pos.y + cursor_padding),
+                            cursor_color, 2.0f);
+
+        draw_list->AddLine(ImVec2(canvas_pos.x + cursor_x - cursor_tip_width/2, canvas_pos.y + canvas_size.y - cursor_padding),
+                            ImVec2(canvas_pos.x + cursor_x + cursor_tip_width/2, canvas_pos.y + canvas_size.y - cursor_padding),
+                            cursor_color, 2.0f);
     }
 }
 
@@ -221,14 +228,6 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
             draw_list->AddRect(ImVec2(handle_center.x - 6, handle_center.y - 6),
                              ImVec2(handle_center.x + 6, handle_center.y + 6),
                              IM_COL32(0, 0, 0, 150), 2.0f, 0, 1.0f);
-
-            // Add small triangle indicator
-            ImVec2 triangle[3] = {
-                ImVec2(handle_center.x, handle_center.y - 3),
-                ImVec2(handle_center.x - 3, handle_center.y + 2),
-                ImVec2(handle_center.x + 3, handle_center.y + 2)
-            };
-            draw_list->AddTriangleFilled(triangle[0], triangle[1], triangle[2], IM_COL32(0, 0, 0, 200));
         }
     }
 }
@@ -328,6 +327,10 @@ void WaveformViewer::drawDebugWindow() {
         ImGui::BulletText("Drag Keyframe Handles: Move Keyframes");
 
         ImGui::Separator();
+        ImGui::Text("Cursor");
+        ImGui::Checkbox("Follow Cursor", &follow_cursor);
+
+        ImGui::Separator();
         ImGui::Text("Audio Processing:");
     /*
         if (ImGui::Button("Load MP3")) {
@@ -367,13 +370,20 @@ void WaveformViewer::drawDebugWindow() {
 
         ImGui::Separator();
         ImGui::Text("Envelope Visualization:");
-        if (ImGui::Checkbox("Show Envelope", &show_envelope)) {
-            // Checkbox changed, no additional action needed
-        }
+        ImGui::Checkbox("Show Waveform", &show_waveform);
 
-        if (ImGui::SliderFloat("Envelope Window (ms)", &envelope_window_ms, 1.0f, 100.0f, "%.1f ms")) {
-            computeEnvelope(); // Recalculate when window size changes
-        }
+        ImGui::BeginDisabled(computing_notes.load());
+        ImGui::Checkbox("Show Notes", &show_notes);
+        ImGui::SameLine();
+        if (ImGui::Button("Compute notes")) detect_notes();
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled(computing_envelope.load());
+        ImGui::Checkbox("Show Envelope", &show_envelope);
+        ImGui::EndDisabled();
+
+        ImGui::SliderFloat("Envelope Window (ms)", &envelope_window_ms, 1.0f, 100.0f, "%.1f ms");
+
 
         if (ImGui::Button("Recalculate Envelope")) {
             computeEnvelope();
@@ -396,8 +406,7 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                                          min_vertical_zoom, max_vertical_zoom);
             } else if (io.KeyShift) {
 
-                auto old_cursor_pixel = sampleToPixel(cursor_position, canvas_size.x);
-
+                float old_center_sample = pixelToSample(canvas_size.x / 2, canvas_size.x);
 
                 // Horizontal zoom
                 float zoom_factor = 1.0f + io.MouseWheel * 0.1f;
@@ -405,10 +414,10 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                 horizontal_zoom = std::clamp(horizontal_zoom * zoom_factor,
                                            min_horizontal_zoom, max_horizontal_zoom);
 
-                // Adjust offset to keep cursor position static
-                float new_cursor_pixel = sampleToPixel(cursor_position, canvas_size.x);
-                float shift = (new_cursor_pixel - old_cursor_pixel);
-                horizontal_offset -= pixelToSample(shift, canvas_size.x);
+                float new_center_sample = pixelToSample(canvas_size.x / 2, canvas_size.x);
+
+                float sample_shift = old_center_sample - new_center_sample;
+                horizontal_offset += sample_shift;
 
             } else {
                 // Horizontal scroll
@@ -506,6 +515,58 @@ float WaveformViewer::amplitudeToPixel(float amplitude, float canvas_height) con
     return canvas_height * 0.5f - amplitude * vertical_zoom * canvas_height * 0.4f;
 }
 
+void WaveformViewer::update_offset() {
+    if (follow_cursor) {
+        if (cursor_position > horizontal_offset + 100 / horizontal_zoom) {
+            horizontal_offset = cursor_position - 100 / horizontal_zoom;
+        }
+    }
+}
+
+void WaveformViewer::detect_notes() {
+    if (!computing_notes.load()) {
+        computing_notes.store(true);
+        std::thread detection_thread([this]() {
+            notes = detectNotes(waveform_data, sample_rate);
+            computing_notes.store(false);
+        });
+        detection_thread.detach();
+    }
+}
+
+void WaveformViewer::computeEnvelope() {
+    if (!computing_envelope.load()) {
+        computing_envelope.store(true);
+        std::thread envelope_thread([this]() {
+            envelope_data = compute_envelope(waveform_data, sample_rate, envelope_window_ms);
+            computing_envelope.store(false);
+        });
+        envelope_thread.detach();
+    }
+}
+
+int WaveformViewer::get_first_note_at_sample(int sample) const {
+
+    int a = 0;
+    int b = notes.size() - 1;
+
+    while (a <= b) {
+        int m = (a + b) / 2;
+        int note_end = notes[m].start_sample + notes[m].duration;
+
+        if (note_end <= sample) {
+            a = m + 1;
+        } else {
+            if (m == 0 || notes[m - 1].start_sample + notes[m - 1].duration <= sample) {
+                return m;
+            }
+            b = m - 1;
+        }
+    }
+
+    return -1;
+}
+
 WaveformViewer::WaveformViewer() {
     // Generate sample waveform data (sine wave with some noise)
     waveform_data.resize(44100);
@@ -520,6 +581,7 @@ WaveformViewer::WaveformViewer() {
 void WaveformViewer::draw() {
     // Reserve space for time scale at bottom
     const float scale_height = 25.0f;
+
 
     ImGui::Begin("Waveform Viewer", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
 
@@ -538,6 +600,7 @@ void WaveformViewer::draw() {
 
     // Handle input
     handleInput(canvas_pos, canvas_size);
+    update_offset();
 
     // Clear background
     draw_list->AddRectFilled(canvas_pos,
@@ -548,10 +611,13 @@ void WaveformViewer::draw() {
     drawGrid(draw_list, canvas_pos, canvas_size);
 
     // Draw waveform
-    drawWaveform(draw_list, canvas_pos, canvas_size);
+    if (show_waveform) drawWaveform(draw_list, canvas_pos, canvas_size);
 
     // Draw envelope
     drawEnvelope(draw_list, canvas_pos, canvas_size);
+
+    // Draw notes
+    if (show_notes) drawNotes(draw_list, canvas_pos, canvas_size);
 
     // Draw cursor
     drawCursor(draw_list, canvas_pos, canvas_size);

@@ -4,7 +4,11 @@
 
 #include "AudioManager.h"
 
+#include <algorithm>
 #include <cstring>
+#include <numeric>
+
+
 
 AudioManager::AudioManager() {
 
@@ -46,7 +50,7 @@ int AudioManager::getSampleRate() const {
     return sample_rate;
 }
 
-void AudioManager::play(const int start_ms) {
+void AudioManager::play(const int start_sample) {
     if (is_playing) return;
 
     if (!isDeviceInitialized) {
@@ -54,7 +58,7 @@ void AudioManager::play(const int start_ms) {
     }
 
     // Clamp starting position
-    size_t startFrame = size_t(start_ms * sample_rate / 1000.0f);
+    size_t startFrame = start_sample;
     playheadPosition = std::min(startFrame, original_samples.size());
 
     is_playing = true;
@@ -114,4 +118,6 @@ void AudioManager::initPlaybackDevice() {
     if (ma_device_init(nullptr, &config, &device) != MA_SUCCESS) {
         throw std::runtime_error("Failed to initialize playback device.");
     }
+
+    isDeviceInitialized = true;
 }

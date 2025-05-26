@@ -31,6 +31,8 @@ private:
     void draw_project_manager();
     void draw_player();
 
+    void handle_input();
+
     void update();
     void update_waveform_viewer();
 

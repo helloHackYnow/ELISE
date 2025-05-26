@@ -10,6 +10,8 @@
 #include "../libs/miniaudio.h"
 #include <thread>
 
+
+
 class AudioManager {
 public:
     AudioManager();
@@ -20,7 +22,7 @@ public:
     const std::vector<float>& getOriginalSamples() const;
     int getSampleRate() const;
 
-    void play(int start_ms = 0);
+    void play(int start_sample = 0);
     void pause();
     void stop();
 

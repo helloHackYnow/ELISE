@@ -4,6 +4,8 @@
 
 #include "EliseApp.h"
 
+#include "imgui_internal.h"
+
 
 EliseApp::EliseApp() {
 }
@@ -143,14 +145,27 @@ void EliseApp::draw_player() {
         }
         ImGui::SameLine();
         if (ImGui::Button("Pause")) {
-            audio_manager.pause();
+            audio_manager.stop();
         }
 
         ImGui::End();
     }
 }
 
+void EliseApp::handle_input() {
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+        if (audio_manager.isPlaying()) {
+            audio_manager.stop();
+        } else {
+            audio_manager.play(size_t(waveform_viewer.get_cursor_position()));
+        }
+    }
+}
+
 void EliseApp::update() {
+    handle_input();
     update_waveform_viewer();
 }
 

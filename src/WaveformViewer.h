@@ -5,9 +5,11 @@
 #ifndef WAVEFORMVIEWER_H
 #define WAVEFORMVIEWER_H
 
+#include <atomic>
 #include <vector>
 
 #include "imgui.h"
+#include "AudioUtils.h"
 
 class WaveformViewer {
 private:
@@ -15,12 +17,14 @@ private:
     float sample_rate = 44100.0f;
     float horizontal_zoom = 1.0f;
     float vertical_zoom = 1.0f;
-    float horizontal_offset = 0.0f;
-    float cursor_position = 0.0f;
+    float horizontal_offset = 0.0f; // Sample
+    float cursor_position = 0.0f; // Sample
     std::vector<float> keyframes;
     int selected_keyframe = -1;
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
+
+    bool follow_cursor = false;
 
     // Debug window
     bool should_draw_debug = true;
@@ -32,18 +36,29 @@ private:
     float max_vertical_zoom = 10.0f;
 
     // Audio
+    bool show_waveform = true;
+
+    // Notes
+    std::vector<DetectedNote> notes;
+    bool show_notes = false;
+    std::atomic_bool computing_notes = false;
+    float note_window_ms = 10.0f;
+
+    // Envelope
     std::vector<float> envelope_data;
-    bool show_envelope = true;
-    float envelope_window_ms = 10.0f; // 10ms window for envelope calculation
+    bool show_envelope = false;
+    std::atomic_bool computing_envelope = false;
+    float envelope_window_ms = 10.0f;
 
 
 private:
-    void computeEnvelope();
+
 
     void drawMenuBar();
     void drawGrid(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawWaveform(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawEnvelope(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
+    void drawNotes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawCursor(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawKeyframes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawTimeScale(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size, float scale_height);
@@ -55,6 +70,13 @@ private:
     float sampleToPixel(float sample, float canvas_width) const;
     float pixelToSample(float pixel, float canvas_width) const;
     float amplitudeToPixel(float amplitude, float canvas_height) const;
+
+    void update_offset();
+
+    void detect_notes();
+    void computeEnvelope();
+
+    int get_first_note_at_sample(int sample) const;
 
 public:
     WaveformViewer();

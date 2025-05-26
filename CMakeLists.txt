@@ -37,6 +37,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/AudioManager.cpp
         src/AudioManager.h
         libs/tinyfiledialogs.c
+        src/AudioUtils.cpp
+        src/AudioUtils.h
 )
 
 find_package(OpenGL REQUIRED)
