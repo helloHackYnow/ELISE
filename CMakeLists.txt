@@ -29,7 +29,7 @@ imgui/backends
 
 target_link_libraries(imgui PUBLIC glfw)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 find_package(OpenGL REQUIRED)
 
