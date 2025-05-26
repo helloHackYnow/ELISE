@@ -29,7 +29,14 @@ imgui/backends
 
 target_link_libraries(imgui PUBLIC glfw)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp
+        src/WaveformViewer.cpp
+        src/WaveformViewer.h
+        src/EliseApp.cpp
+        src/EliseApp.h
+        src/AudioManager.cpp
+        src/AudioManager.h
+)
 
 find_package(OpenGL REQUIRED)
 
@@ -40,3 +47,5 @@ target_link_libraries(${PROJECT_NAME}
         ${CMAKE_DL_LIBS}
         OpenGL::GL
 )
+
+file(COPY ressources DESTINATION ${CMAKE_BINARY_DIR})
