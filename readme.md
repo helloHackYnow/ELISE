@@ -1,2 +1,3 @@
 # ELISE
-## Event-Linked Ilumination and Sound Engine
+
+## Event-Linked Illumination and Sound Engine
