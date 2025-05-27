@@ -22,7 +22,7 @@ public:
     const std::vector<float>& getOriginalSamples() const;
     int getSampleRate() const;
 
-    void play(int start_sample = 0);
+    void play(int start_sample = 0, float speed_mul = 1.0f);
     void pause();
     void stop();
 
@@ -32,7 +32,7 @@ public:
 
 private:
     static void dataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
-    void initPlaybackDevice();
+    void initPlaybackDevice(float speed_mul = 1.0f);
 
 
 private:

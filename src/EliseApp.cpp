@@ -46,6 +46,9 @@ bool EliseApp::init() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+
+    viewport.init(500, 500);
+
     return true;
 }
 
@@ -92,6 +95,7 @@ void EliseApp::draw() {
     draw_project_manager();
     draw_player();
     waveform_viewer.draw();
+    viewport.draw();
 }
 
 void EliseApp::draw_menu_bar() {
@@ -141,15 +145,27 @@ void EliseApp::draw_player() {
     if (ImGui::Begin("Player")) {
         ImGui::Text("Player");
         if (ImGui::Button("Play")) {
-            audio_manager.play(size_t(waveform_viewer.get_cursor_position()));
+            play_audio();
         }
         ImGui::SameLine();
         if (ImGui::Button("Pause")) {
-            audio_manager.stop();
+            stop_audio();
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Playback option");
+
+        if ( ImGui::DragFloat("Speed", &playback_speed, 0.01f, 0.1f, 10.0f) && audio_manager.isPlaying()) {
+            stop_audio();
+            play_audio();
         }
 
         ImGui::End();
     }
+}
+
+void EliseApp::draw_viewport() {
+    viewport.draw();
 }
 
 void EliseApp::handle_input() {
@@ -157,9 +173,9 @@ void EliseApp::handle_input() {
 
     if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
         if (audio_manager.isPlaying()) {
-            audio_manager.stop();
+            stop_audio();
         } else {
-            audio_manager.play(size_t(waveform_viewer.get_cursor_position()));
+            play_audio();
         }
     }
 }
@@ -174,4 +190,13 @@ void EliseApp::update_waveform_viewer() {
         auto pos = audio_manager.getPlayheadPosition();
         waveform_viewer.set_cursor_position(pos);
     }
+}
+
+void EliseApp::play_audio() {
+    audio_manager.play(size_t(waveform_viewer.get_cursor_position()), playback_speed);
+
+}
+
+void EliseApp::stop_audio() {
+    audio_manager.stop();
 }

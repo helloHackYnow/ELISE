@@ -39,6 +39,12 @@ add_executable(${PROJECT_NAME} src/main.cpp
         libs/tinyfiledialogs.c
         src/AudioUtils.cpp
         src/AudioUtils.h
+        libs/glad/src/glad.c
+        src/Viewport.cpp
+        src/Viewport.h
+        src/shaders.h
+        # src/LightManager.cpp
+        # src/LightManager.h
 )
 
 find_package(OpenGL REQUIRED)

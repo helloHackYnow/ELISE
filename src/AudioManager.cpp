@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <numeric>
 
 
@@ -50,11 +51,11 @@ int AudioManager::getSampleRate() const {
     return sample_rate;
 }
 
-void AudioManager::play(const int start_sample) {
+void AudioManager::play(const int start_sample, float speed_mul) {
     if (is_playing) return;
 
     if (!isDeviceInitialized) {
-        initPlaybackDevice();
+        initPlaybackDevice(speed_mul);
     }
 
     // Clamp starting position
@@ -107,9 +108,11 @@ void AudioManager::dataCallback(ma_device *pDevice, void *pOutput, const void *p
     }
 }
 
-void AudioManager::initPlaybackDevice() {
+void AudioManager::initPlaybackDevice(float speed_mul) {
+
+    std::cout << "speed_mul : " << speed_mul << std::endl;
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
-    config.sampleRate = sample_rate;
+    config.sampleRate = int(float(sample_rate) * speed_mul);
     config.playback.format = ma_format_f32;
     config.playback.channels = 1;
     config.dataCallback = dataCallback;
