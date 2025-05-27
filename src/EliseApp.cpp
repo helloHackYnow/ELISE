@@ -49,6 +49,13 @@ bool EliseApp::init() {
 
     viewport.init(500, 500);
 
+    waveform_viewer.key_frame_creation_callback = [this](float arg){key_frame_creation_callback(arg);};
+    waveform_viewer.key_frame_deletion_callback = [this](int arg){key_frame_deletion_callback(arg);};
+    waveform_viewer.key_frame_drag_callback = [this](int arg, int64_t arg2){key_frame_drag_callback(arg, arg2);};
+    waveform_viewer.key_frame_selection_callback = [this](int arg){key_frame_selection_callback(arg);};
+
+    init_light_manager();
+
     return true;
 }
 
@@ -90,12 +97,41 @@ void EliseApp::cleanup() {
     glfwTerminate();
 }
 
+void EliseApp::init_light_manager() {
+    for (int i = 0; i < light_count; ++i) {
+        light_manager.addLight();
+    }
+
+    light_manager.new_group({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+
+}
+
+void EliseApp::compile_commands() {
+    std::vector<Command> commands;
+
+    order_keyframes();
+
+    for (auto & keyframe: keyframes) {
+        for (auto & command: keyframe.commands) {
+            commands.push_back(command);
+        }
+    }
+
+    std::reverse(commands.begin(), commands.end());
+
+    light_manager.reset();
+    light_manager.setCommandStack(commands);
+}
+
 void EliseApp::draw() {
     draw_menu_bar();
     draw_project_manager();
     draw_player();
+    draw_keyframe_edition_window();
+    draw_command_edition_window();
     waveform_viewer.draw();
     viewport.draw();
+
 }
 
 void EliseApp::draw_menu_bar() {
@@ -112,6 +148,7 @@ void EliseApp::draw_menu_bar() {
         }
         if (ImGui::BeginMenu("Window")) {
             ImGui::MenuItem("Project Manager", nullptr, &is_project_manager_visible);
+            ImGui::MenuItem("Keyframe Edition", nullptr, &is_keyframe_edition_window_visible);
             ImGui::Separator();
             if (ImGui::MenuItem("Exit")) {
                 glfwSetWindowShouldClose(window, true);
@@ -123,8 +160,8 @@ void EliseApp::draw_menu_bar() {
 }
 
 void EliseApp::draw_project_manager() {
-    if (ImGui::Begin("Project Manager", &is_project_manager_visible)) {
-        ImGui::Text("Project Manager");
+    if (ImGui::Begin("Project", &is_project_manager_visible)) {
+        ImGui::Text("Project");
 
         if (ImGui::Button("Load song")) {
             const char* filters[] = { "*.mp3" };
@@ -168,6 +205,147 @@ void EliseApp::draw_viewport() {
     viewport.draw();
 }
 
+void EliseApp::draw_keyframe_edition_window() {
+    if (ImGui::Begin("Keyframe", &is_keyframe_edition_window_visible)) {
+        ImGui::Text("Keyframe");
+
+        ImGui::Separator();
+
+        if (selected_keyframe >= 0) {
+            auto & keyframe = keyframes[selected_keyframe];
+
+            ImGui::BeginTable("KeyframeCommands", 2);
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 50);
+            ImGui::TableSetupColumn("Command", ImGuiTableColumnFlags_WidthStretch);
+
+            char btn_buff[64];
+
+            for (int i = 0; i < keyframe.commands.size(); ++i) {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+
+                ImGui::Text("%d - ", i);
+
+                ImGui::TableNextColumn();
+                ImGui::PushID(i);
+
+                sprintf(btn_buff, "Action on group %d", keyframe.commands[i].group_id);
+                if (ImGui::Button(btn_buff)) {
+                    selected_command = i;
+                }
+                ImGui::PopID();
+
+
+            }
+            ImGui::EndTable();
+
+        } else {
+            ImGui::BeginDisabled();
+            ImGui::Text("No keyframe selected");
+            ImGui::EndDisabled();
+        }
+
+
+        ImGui::End();
+    }
+}
+
+void EliseApp::draw_command_edition_window() {
+    if (ImGui::Begin("Command", &is_command_edition_window_visible)) {
+        if (selected_keyframe < 0 || selected_command < 0 || selected_command >= keyframes[selected_keyframe].commands.size()) {
+            ImGui::BeginDisabled();
+            ImGui::Text("No command selected");
+            ImGui::EndDisabled();
+        } else {
+            auto & command = keyframes[selected_keyframe].commands[selected_command];
+
+            ImGui::Text("Command %d", selected_command);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+
+            ImGui::InputInt("Group id", &command.group_id);
+            command.group_id = std::min(std::max(command.group_id, 0), group_count - 1);
+
+
+            ImGui::Spacing();
+            ImGui::Text("Animation");
+            ImGui::Separator();
+
+            if (ImGui::BeginCombo("Kind", AnimationKind_to_str(command.animation.kind)))
+            {
+                for (int n = 0; n < IM_ARRAYSIZE(AnimationKind_str); n++)
+                {
+                    const bool is_selected = (command.animation.kind == AnimationKind_from_int[n]);
+                    if (ImGui::Selectable(AnimationKind_str[n], is_selected))
+                        command.animation.kind = AnimationKind_from_int[n];
+
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            switch (command.animation.kind) {
+                case AnimationKind::gradient : {
+
+                    auto & gradient = command.animation.gradient;
+
+                    if (ImGui::BeginCombo("Interpolation", GradientKind_to_str(gradient.kind))) {
+                        for (int n = 0; n < IM_ARRAYSIZE(GradientKind_str); n++) {
+                            bool is_selected = (gradient.kind == GradientKind_from_int[n]);
+
+                            if (ImGui::Selectable(GradientKind_str[n], is_selected))
+                                gradient.kind = GradientKind_from_int[n];
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
+                        }
+
+                        ImGui::EndCombo();
+                    }
+
+                    ImGui::DragInt("Duration (in sample)", &gradient.duration);
+
+                    ImGui::Spacing();
+
+                    ImGui::Text("Color gradient");
+                    ImGui::Separator();
+                    // Start color
+                    float col[4] = {
+                        gradient.start_color.r / 255.0f,
+                        gradient.start_color.g / 255.0f,
+                        gradient.start_color.b / 255.0f,
+                        gradient.start_color.a / 255.0f
+                    };
+                    ImGui::ColorEdit4("Start color", col);
+                    gradient.start_color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+
+                    // End color
+                    col[0] = gradient.end_color.r / 255.0f;
+                    col[1] = gradient.end_color.g / 255.0f;
+                    col[2] = gradient.end_color.b / 255.0f;
+                    col[3] = gradient.end_color.a / 255.0f;
+                    ImGui::ColorEdit4("End  color", col);
+                    gradient.end_color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+
+
+                    break;
+                }
+
+                case AnimationKind::toggle : {
+                    break;
+                }
+
+
+            }
+        }
+
+        ImGui::End();
+    }
+}
+
 void EliseApp::handle_input() {
     ImGuiIO& io = ImGui::GetIO();
 
@@ -183,6 +361,8 @@ void EliseApp::handle_input() {
 void EliseApp::update() {
     handle_input();
     update_waveform_viewer();
+    update_light_manager();
+    update_viewport();
 }
 
 void EliseApp::update_waveform_viewer() {
@@ -192,11 +372,88 @@ void EliseApp::update_waveform_viewer() {
     }
 }
 
+void EliseApp::update_light_manager() {
+    if (audio_manager.isPlaying()) {
+        auto pos = audio_manager.getPlayheadPosition();
+        light_manager.update(pos);
+    }
+}
+
+void EliseApp::update_viewport() {
+    if (audio_manager.isPlaying()) {
+        viewport.setColors(light_manager.getLightStates());
+    }
+}
+
 void EliseApp::play_audio() {
+
+    compile_commands();
     audio_manager.play(size_t(waveform_viewer.get_cursor_position()), playback_speed);
 
 }
 
 void EliseApp::stop_audio() {
     audio_manager.stop();
+}
+
+void EliseApp::order_keyframes() {
+    std::sort(keyframes.begin(), keyframes.end(), compare);
+}
+
+void EliseApp::key_frame_creation_callback(float sample) {
+
+    // Placeholder command
+    std::vector<Command> commands;
+    for (int i = 0; i < 5; ++i) {
+        Command command{};
+        command.trigger_sample = int(sample);
+        command.group_id = i;
+        auto anim = AnimationDesc{
+            AnimationKind::gradient,
+            GradientInfo{
+                Color{255, 0, 0, 255},
+                Color{0, 0, 255, 255},
+                GradientKind::linear,
+                int(sample),
+                44000 * i
+            }
+        };
+
+        command.animation = anim;
+        commands.push_back(command);
+
+    }
+
+    keyframes.push_back(Keyframe{int(sample), commands});
+    order_keyframes();
+    update_keyframes();
+
+    selected_keyframe = -1;
+}
+
+// TODO : optimization
+void EliseApp::key_frame_deletion_callback(int keyframe_index) {
+    keyframes.erase(keyframes.begin() + keyframe_index);
+    update_keyframes();
+    selected_keyframe = -1;
+}
+
+void EliseApp::key_frame_drag_callback(int keyframe_index, int64_t new_sample) {
+    keyframes[keyframe_index].trigger_sample = new_sample;
+    for (auto & command: keyframes[keyframe_index].commands) {retimeCommand(command, new_sample);}
+    //order_keyframes();
+    update_keyframes();
+}
+
+void EliseApp::key_frame_selection_callback(int keyframe_index) {
+    selected_keyframe = keyframe_index;
+}
+
+void EliseApp::update_keyframes() {
+    std::vector<float> waveform_keyframes;
+    waveform_keyframes.reserve(keyframes.size());
+
+    for (auto& keyframe : keyframes) {waveform_keyframes.push_back(float(keyframe.trigger_sample));}
+
+    waveform_viewer.set_keyframes(waveform_keyframes);
 }

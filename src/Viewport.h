@@ -12,6 +12,8 @@
 #include <../libs/glm/glm.hpp>
 #include <imgui.h>
 
+#include "LightManager.h"
+
 GLuint compileShader(GLenum shaderType, const char* shaderSrc);
 GLuint linkProgram(GLuint vs, GLuint fs);
 
@@ -29,6 +31,7 @@ public:
     void init(int width, int height);
 
     // Set RGBA colors for the 12 lights (in row order: 5,2,5).
+    void setColors(const std::vector<Color>& colors);
     void setColors(const std::array<glm::vec4, 12>& colors);
 
     // Render lights (with bloom) to texture and display in ImGui "preview" window.
@@ -37,6 +40,8 @@ public:
 
     // Resize the offscreen texture (call when ImGui preview window size changes).
     void resize(int width, int height);
+
+
 
 private:
     void initFramebuffer(int width, int height);

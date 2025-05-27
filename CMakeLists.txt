@@ -43,8 +43,9 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/Viewport.cpp
         src/Viewport.h
         src/shaders.h
-        # src/LightManager.cpp
-        # src/LightManager.h
+        src/InterpolationUtils.h
+        src/LightManager.h
+        src/LightManager.cpp
 )
 
 find_package(OpenGL REQUIRED)

@@ -74,6 +74,14 @@ void Viewport::init(int width, int height) {
     initFramebuffer(width, height);
 }
 
+void Viewport::setColors(const std::vector<Color> &colors) {
+    std::array<glm::vec4, 12> c;
+    for (int i = 0; i < 12; ++i) {
+        c[i] = glm::vec4(colors[i].r / 255.f, colors[i].g / 255.f, colors[i].b / 255.f, colors[i].a / 255.f);
+    }
+    setColors(c);
+}
+
 void Viewport::setColors(const std::array<glm::vec4, 12> &colors) {
     colors_ = colors;
 }

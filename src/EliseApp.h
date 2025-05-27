@@ -15,7 +15,17 @@
 #include "AudioManager.h"
 #include <GLFW/glfw3.h>
 #include "Viewport.h"
+#include "LightManager.h"
 
+struct Keyframe {
+    int trigger_sample;
+
+    std::vector<Command> commands;
+};
+
+inline bool compare(const Keyframe& a, const Keyframe& b) {
+    return a.trigger_sample < b.trigger_sample;
+}
 
 class EliseApp {
 
@@ -26,21 +36,41 @@ public:
     void cleanup();
 
 private:
+
+    void init_light_manager();
+    void compile_commands();
+
     void draw();
 
     void draw_menu_bar();
     void draw_project_manager();
     void draw_player();
     void draw_viewport();
+    void draw_keyframe_edition_window();
+    void draw_command_edition_window();
 
     void handle_input();
 
     void update();
     void update_waveform_viewer();
+    void update_light_manager();
+    void update_viewport();
 
     // Audio player
     void play_audio();
     void stop_audio();
+
+    // Keyframes handling
+    void order_keyframes();
+    void key_frame_creation_callback(float sample);
+    void key_frame_deletion_callback(int keyframe_index);
+
+    // New sample: sample the keyframe has been displaced to
+    void key_frame_drag_callback(int keyframe_index, int64_t new_sample);
+    void key_frame_selection_callback(int keyframe_index);
+
+    void update_keyframes();
+
 
 private:
     GLFWwindow* window;
@@ -48,10 +78,22 @@ private:
     AudioManager audio_manager;
     Viewport viewport;
 
+    LightManager light_manager;
+
+    int light_count = 12;
+    int group_count = light_count + 1;
+
     // Player state
     float playback_speed = 1.0f;
 
+    // Keyframes
+    std::vector<Keyframe> keyframes;
+    int selected_keyframe = -1;
+    bool is_keyframe_edition_window_visible = false;
 
+    // Commands
+    int selected_command = -1;
+    bool is_command_edition_window_visible = false;
 
     // Project manager state
     std::string project_path;

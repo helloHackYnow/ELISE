@@ -6,12 +6,19 @@
 #define WAVEFORMVIEWER_H
 
 #include <atomic>
+#include <functional>
 #include <vector>
 
 #include "imgui.h"
 #include "AudioUtils.h"
 
 class WaveformViewer {
+public:
+    std::function<void(float)> key_frame_creation_callback = nullptr;
+    std::function<void(int)> key_frame_deletion_callback = nullptr;
+    std::function<void(int, int64_t)> key_frame_drag_callback = nullptr;
+    std::function<void(int)> key_frame_selection_callback = nullptr;
+
 private:
     std::vector<float> waveform_data;
     float sample_rate = 44100.0f;
@@ -19,7 +26,8 @@ private:
     float vertical_zoom = 1.0f;
     float horizontal_offset = 0.0f; // Sample
     float cursor_position = 0.0f; // Sample
-    std::vector<float> keyframes;
+
+    std::vector<float> keyframes; // sample
     int selected_keyframe = -1;
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
@@ -51,6 +59,8 @@ private:
     float envelope_window_ms = 10.0f;
 
 
+
+
 private:
 
 
@@ -71,7 +81,7 @@ private:
     float pixelToSample(float pixel, float canvas_width) const;
     float amplitudeToPixel(float amplitude, float canvas_height) const;
 
-    void update_offset();
+    void update_offset(float canvas_width);
 
     void detect_notes();
     void computeEnvelope();
@@ -87,6 +97,8 @@ public:
 
     void set_sample_rate(float sample_rate);
     void set_waveform_data(const std::vector<float> waveform_data);
+
+    void set_keyframes(const std::vector<float>& keyframes);
 
 };
 

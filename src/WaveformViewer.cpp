@@ -148,20 +148,20 @@ void WaveformViewer::drawEnvelope(ImDrawList *draw_list, ImVec2 canvas_pos, ImVe
     // Draw positive envelope
     for (int i = 1; i < envelope_points_pos.size(); ++i) {
         draw_list->AddLine(envelope_points_pos[i-1], envelope_points_pos[i],
-                         IM_COL32(255, 100, 100, 180), 1.5f);
+                         IM_COL32(178, 251, 165, 210), 1.5f);
     }
 
     // Draw negative envelope
     for (int i = 1; i < envelope_points_neg.size(); ++i) {
         draw_list->AddLine(envelope_points_neg[i-1], envelope_points_neg[i],
-                         IM_COL32(255, 100, 100, 180), 1.5f);
+                         IM_COL32(178, 251, 165, 210), 1.5f);
     }
 
     // Optional: Fill between envelopes for a more solid look
     if (envelope_points_pos.size() > 1) {
         for (int i = 0; i < envelope_points_pos.size(); ++i) {
             draw_list->AddLine(envelope_points_pos[i], envelope_points_neg[i],
-                             IM_COL32(255, 100, 100, 50), 1.0f);
+                             IM_COL32(178, 251, 165, 70), 1.0f);
         }
     }
 }
@@ -445,6 +445,7 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                     // Check if clicking on the handle (top 20 pixels)
                     if (abs(mouse_x - keyframe_x) < 8.0f && mouse_y < 20.0f) {
                         selected_keyframe = i;
+                        key_frame_selection_callback(i);
                         dragging_keyframe = true;
                         break;
                     }
@@ -459,13 +460,12 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                if (dragging_cursor) {
+                std::cout << "mouse drag !" << std::endl;
+                if (dragging_keyframe && selected_keyframe >= 0) {
+                    key_frame_drag_callback(selected_keyframe, int(pixelToSample(mouse_x, canvas_size.x)));
+                } else if (dragging_cursor) {
                     cursor_position = pixelToSample(mouse_x, canvas_size.x);
                     cursor_position = std::clamp(cursor_position, 0.0f, (float)waveform_data.size());
-                } else if (dragging_keyframe && selected_keyframe >= 0) {
-                    keyframes[selected_keyframe] = pixelToSample(mouse_x, canvas_size.x);
-                    keyframes[selected_keyframe] = std::clamp(keyframes[selected_keyframe],
-                                                            0.0f, (float)waveform_data.size());
                 }
             }
 
@@ -487,14 +487,14 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (!exists) {
-                keyframes.push_back(cursor_position);
-                std::sort(keyframes.begin(), keyframes.end());
+                key_frame_creation_callback(cursor_position);
+                selected_keyframe = -1;
             }
         }
 
         // Handle Delete key for removing selected keyframe
         if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Delete) && selected_keyframe >= 0) {
-            keyframes.erase(keyframes.begin() + selected_keyframe);
+            key_frame_deletion_callback(selected_keyframe);
             selected_keyframe = -1;
         }
 }
@@ -515,10 +515,10 @@ float WaveformViewer::amplitudeToPixel(float amplitude, float canvas_height) con
     return canvas_height * 0.5f - amplitude * vertical_zoom * canvas_height * 0.4f;
 }
 
-void WaveformViewer::update_offset() {
+void WaveformViewer::update_offset(float canvas_width) {
     if (follow_cursor) {
-        if (cursor_position > horizontal_offset + 100 / horizontal_zoom) {
-            horizontal_offset = cursor_position - 100 / horizontal_zoom;
+        if (cursor_position > horizontal_offset + canvas_width / 4 / horizontal_zoom) {
+            horizontal_offset = cursor_position - canvas_width / 4 / horizontal_zoom;
         }
     }
 }
@@ -600,7 +600,7 @@ void WaveformViewer::draw() {
 
     // Handle input
     handleInput(canvas_pos, canvas_size);
-    update_offset();
+    update_offset(canvas_size.x);
 
     // Clear background
     draw_list->AddRectFilled(canvas_pos,
@@ -630,9 +630,9 @@ void WaveformViewer::draw() {
 
     // Invisible button for input handling
     ImGui::SetCursorScreenPos(canvas_pos);
-    ImGui::InvisibleButton("canvas", ImVec2(canvas_size.x, canvas_size.y + scale_height),
-                          ImGuiButtonFlags_MouseButtonLeft |
-                          ImGuiButtonFlags_MouseButtonRight);
+    // ImGui::InvisibleButton("canvas", ImVec2(canvas_size.x, canvas_size.y + scale_height),
+    //                       ImGuiButtonFlags_MouseButtonLeft |
+    //                       ImGuiButtonFlags_MouseButtonRight);
 
     if (should_draw_debug) drawDebugWindow();
 
@@ -653,5 +653,9 @@ void WaveformViewer::set_sample_rate(float sample_rate) {
 
 void WaveformViewer::set_waveform_data(const std::vector<float> waveform_data) {
     this->waveform_data = waveform_data;
+}
+
+void WaveformViewer::set_keyframes(const std::vector<float> &keyframes) {
+    this->keyframes = keyframes;
 }
 
