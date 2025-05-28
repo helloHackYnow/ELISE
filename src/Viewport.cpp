@@ -88,7 +88,7 @@ void Viewport::setColors(const std::array<glm::vec4, 12> &colors) {
 
 void Viewport::draw() {
     // 5. ImGui preview window
-    ImGui::Begin("preview");
+    ImGui::Begin("Preview");
     resize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
     render();
     ImGui::Image((ImTextureID)(uintptr_t)sceneTex_, ImVec2((float)width_, (float)height_), ImVec2(0, 1), ImVec2(1, 0));

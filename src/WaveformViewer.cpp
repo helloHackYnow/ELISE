@@ -462,7 +462,6 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                std::cout << "mouse drag !" << std::endl;
                 if (dragging_keyframe && selected_keyframe >= 0) {
                     key_frame_drag_callback(selected_keyframe, int(pixelToSample(mouse_x, canvas_size.x)));
                 } else if (dragging_cursor) {

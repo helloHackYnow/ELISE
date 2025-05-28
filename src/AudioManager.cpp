@@ -110,7 +110,6 @@ void AudioManager::dataCallback(ma_device *pDevice, void *pOutput, const void *p
 
 void AudioManager::initPlaybackDevice(float speed_mul) {
 
-    std::cout << "speed_mul : " << speed_mul << std::endl;
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
     config.sampleRate = int(float(sample_rate) * speed_mul);
     config.playback.format = ma_format_f32;
