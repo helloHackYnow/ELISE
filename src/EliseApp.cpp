@@ -40,7 +40,15 @@ bool EliseApp::init() {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // Setup ImGui style
-    ImGui::StyleColorsDark();
+    ImFontConfig font_config;
+    font_config.OversampleH = 3;
+    font_config.OversampleV = 1;
+    font_config.PixelSnapH = false;
+
+    io.Fonts->AddFontFromFileTTF("./ressources/Roboto-Regular.ttf", 18.0f, &font_config);
+
+    // Setup Dear ImGui style
+    setBessDarkColors();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -54,6 +62,7 @@ bool EliseApp::init() {
     waveform_viewer.key_frame_drag_callback = [this](int arg, int64_t arg2){key_frame_drag_callback(arg, arg2);};
     waveform_viewer.key_frame_selection_callback = [this](int arg){key_frame_selection_callback(arg);};
 
+    init_groups();
     init_light_manager();
 
     return true;
@@ -97,12 +106,32 @@ void EliseApp::cleanup() {
     glfwTerminate();
 }
 
+void EliseApp::init_groups() {
+
+    char buff[128];
+
+    for (size_t i = 0; i < light_count; ++i) {
+        sprintf(buff, "Light %d", i + 1);
+        new_group(buff, {i});
+    }
+
+    new_group("all", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+    new_group("up", {0, 1, 2, 3, 4});
+    new_group("mid", {5, 6});
+    new_group("down", {7, 8, 9, 10, 11});
+}
+
 void EliseApp::init_light_manager() {
     for (int i = 0; i < light_count; ++i) {
         light_manager.addLight();
     }
 
-    light_manager.new_group({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+    for (auto & group: groups) {
+        auto & name = group.first;
+        auto & ids = group.second;
+
+        light_manager.new_group(ids);
+    }
 
 }
 
@@ -221,7 +250,7 @@ void EliseApp::draw_keyframe_edition_window() {
             std::vector<const char*> listbox_buff;
 
             for (auto & command: keyframe.commands) {
-                commands.push_back("Command on group " + std::to_string(command.group_id));
+                commands.push_back("Command on group " + group_names[command.group_id]);
                 listbox_buff.push_back(commands.back().c_str());
             }
 
@@ -270,8 +299,17 @@ void EliseApp::draw_command_edition_window() {
             ImGui::Spacing();
             ImGui::Separator();
 
-            ImGui::InputInt("Group id", &command.group_id);
-            command.group_id = std::min(std::max(command.group_id, 0), group_count - 1);
+            if (ImGui::BeginCombo("Group", group_names[command.group_id].c_str())) {
+                for (int n = 0; n < group_names.size(); n++) {
+                    const bool is_selected = (command.group_id == n);
+                    if (ImGui::Selectable(group_names[n].c_str(), is_selected))
+                        command.group_id = n;
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
 
 
             ImGui::Spacing();
@@ -429,7 +467,7 @@ void EliseApp::order_keyframes() {
 
 void EliseApp::key_frame_creation_callback(float sample) {
 
-    keyframes.push_back(Keyframe{int(sample), {}});
+    keyframes.push_back(Keyframe{int(sample), {Command{}}});
     order_keyframes();
     update_keyframes();
 
@@ -461,4 +499,9 @@ void EliseApp::update_keyframes() {
     for (auto& keyframe : keyframes) {waveform_keyframes.push_back(float(keyframe.trigger_sample));}
 
     waveform_viewer.set_keyframes(waveform_keyframes);
+}
+
+void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids) {
+    groups.insert({name, ids});
+    group_names.push_back(name);
 }

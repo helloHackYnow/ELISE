@@ -46,6 +46,7 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/InterpolationUtils.h
         src/LightManager.h
         src/LightManager.cpp
+        src/ImGui_themes.h
 )
 
 find_package(OpenGL REQUIRED)
@@ -58,4 +59,9 @@ target_link_libraries(${PROJECT_NAME}
         OpenGL::GL
 )
 
-file(COPY ressources DESTINATION ${CMAKE_BINARY_DIR})
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/ressources
+        ${CMAKE_BINARY_DIR}/ressources
+)

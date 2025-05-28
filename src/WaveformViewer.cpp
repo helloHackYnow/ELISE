@@ -221,13 +221,15 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
                              line_color, 1.5f);
 
             // Draw keyframe handle at top (larger, easier to click)
-            ImVec2 handle_center = ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + 8);
-            draw_list->AddRectFilled(ImVec2(handle_center.x - 6, handle_center.y - 6),
-                                   ImVec2(handle_center.x + 6, handle_center.y + 6),
-                                   handle_color, 2.0f);
-            draw_list->AddRect(ImVec2(handle_center.x - 6, handle_center.y - 6),
-                             ImVec2(handle_center.x + 6, handle_center.y + 6),
-                             IM_COL32(0, 0, 0, 150), 2.0f, 0, 1.0f);
+            static ImVec2 rect_size{5, 10};
+            static float rec_rounding = 5.f;
+            ImVec2 handle_center = ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + rect_size.y + 2);
+            draw_list->AddRectFilled(ImVec2(handle_center.x - rect_size.x, handle_center.y - rect_size.y),
+                                   ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
+                                   handle_color, rec_rounding);
+            draw_list->AddRect(ImVec2(handle_center.x - rect_size.x, handle_center.y - rect_size.y),
+                             ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
+                             IM_COL32(0, 0, 0, 150), rec_rounding, 0, 1.0f);
         }
     }
 }

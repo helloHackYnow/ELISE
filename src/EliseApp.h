@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 #include "Viewport.h"
 #include "LightManager.h"
+#include "ImGui_themes.h"
 
 struct Keyframe {
     int trigger_sample;
@@ -37,6 +38,7 @@ public:
 
 private:
 
+    void init_groups();
     void init_light_manager();
     void compile_commands();
 
@@ -71,6 +73,8 @@ private:
 
     void update_keyframes();
 
+    void new_group(const std::string& name, const std::vector<size_t>& ids);
+
 
 private:
     GLFWwindow* window;
@@ -81,7 +85,8 @@ private:
     LightManager light_manager;
 
     int light_count = 12;
-    int group_count = light_count + 1;
+    std::unordered_map<std::string, std::vector<size_t>> groups {};
+    std::vector<std::string> group_names {};
 
     // Player state
     float playback_speed = 1.0f;
