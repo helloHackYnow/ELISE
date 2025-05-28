@@ -113,6 +113,9 @@ void EliseApp::compile_commands() {
 
     for (auto & keyframe: keyframes) {
         for (auto & command: keyframe.commands) {
+
+            retimeCommand(command, keyframe.trigger_sample);
+
             commands.push_back(command);
         }
     }
@@ -214,30 +217,33 @@ void EliseApp::draw_keyframe_edition_window() {
         if (selected_keyframe >= 0) {
             auto & keyframe = keyframes[selected_keyframe];
 
-            ImGui::BeginTable("KeyframeCommands", 2);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 50);
-            ImGui::TableSetupColumn("Command", ImGuiTableColumnFlags_WidthStretch);
+            std::vector<std::string> commands;
+            std::vector<const char*> listbox_buff;
 
-            char btn_buff[64];
-
-            for (int i = 0; i < keyframe.commands.size(); ++i) {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-
-                ImGui::Text("%d - ", i);
-
-                ImGui::TableNextColumn();
-                ImGui::PushID(i);
-
-                sprintf(btn_buff, "Action on group %d", keyframe.commands[i].group_id);
-                if (ImGui::Button(btn_buff)) {
-                    selected_command = i;
-                }
-                ImGui::PopID();
-
-
+            for (auto & command: keyframe.commands) {
+                commands.push_back("Command on group " + std::to_string(command.group_id));
+                listbox_buff.push_back(commands.back().c_str());
             }
-            ImGui::EndTable();
+
+            ImGui::ListBox("###", &selected_command, listbox_buff.data(), listbox_buff.size());
+
+
+
+            if (ImGui::Button("Add")) {
+                keyframe.commands.push_back(Command{});
+            }
+
+            ImGui::SameLine();
+
+            ImGui::BeginDisabled(selected_command < 0 || selected_command >= keyframe.commands.size());
+            if (ImGui::Button("Delete")) {
+                keyframe.commands.erase(keyframes[selected_keyframe].commands.begin() + selected_command);
+            }
+
+            ImGui::EndDisabled();
+
+
+
 
         } else {
             ImGui::BeginDisabled();
@@ -335,6 +341,27 @@ void EliseApp::draw_command_edition_window() {
                 }
 
                 case AnimationKind::toggle : {
+
+                    auto & toggle = command.animation.toggle;
+
+                    ImGui::Checkbox("Toggle on", &toggle.is_on);
+                    ImGui::Spacing();
+
+                    ImGui::BeginDisabled(!toggle.is_on);
+
+                    ImGui::Text("Color");
+                    ImGui::Separator();
+
+                    float col[4] = {
+                        toggle.color.r / 255.0f,
+                        toggle.color.g / 255.0f,
+                        toggle.color.b / 255.0f,
+                        toggle.color.a / 255.0f
+                    };
+                    ImGui::ColorEdit4("Color", col);
+                    toggle.color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+
+                    ImGui::EndDisabled();
                     break;
                 }
 
@@ -402,29 +429,7 @@ void EliseApp::order_keyframes() {
 
 void EliseApp::key_frame_creation_callback(float sample) {
 
-    // Placeholder command
-    std::vector<Command> commands;
-    for (int i = 0; i < 5; ++i) {
-        Command command{};
-        command.trigger_sample = int(sample);
-        command.group_id = i;
-        auto anim = AnimationDesc{
-            AnimationKind::gradient,
-            GradientInfo{
-                Color{255, 0, 0, 255},
-                Color{0, 0, 255, 255},
-                GradientKind::linear,
-                int(sample),
-                44000 * i
-            }
-        };
-
-        command.animation = anim;
-        commands.push_back(command);
-
-    }
-
-    keyframes.push_back(Keyframe{int(sample), commands});
+    keyframes.push_back(Keyframe{int(sample), {}});
     order_keyframes();
     update_keyframes();
 

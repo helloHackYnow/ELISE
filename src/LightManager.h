@@ -8,10 +8,10 @@
 #include "InterpolationUtils.h"
 
 struct Color {
-    int r;
-    int g;
-    int b;
-    int a;
+    int r = 0;
+    int g = 0;
+    int b = 0;
+    int a = 255;
 };
 
 Color interpolate_linear(Color a, Color b, float t);
@@ -107,10 +107,9 @@ Color computeToggleColor(const ToggleInfo& toggle, int sample);
 struct AnimationDesc {
     AnimationKind kind;
 
-    union {
-        GradientInfo gradient;
-        ToggleInfo toggle;
-    };
+    GradientInfo gradient;
+    ToggleInfo toggle;
+
 };
 
 struct Command {
