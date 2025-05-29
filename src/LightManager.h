@@ -10,7 +10,7 @@
 
 struct Group {
     std::string name;
-    std::vector<int> lights;
+    std::vector<size_t> lights;
 };
 
 struct Color {

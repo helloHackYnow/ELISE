@@ -253,6 +253,7 @@ void WaveformViewer::drawTimeScale(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
         // Determine appropriate scale spacing based on zoom level
         // TODO : Wtf is this AI garbage
         float scale_spacing_seconds;
+
         if (seconds_per_pixel > 2.0f) scale_spacing_seconds = 10.0f;
         else if (seconds_per_pixel > 1.0f) scale_spacing_seconds = 5.0f;
         else if (seconds_per_pixel > 0.5f) scale_spacing_seconds = 2.0f;

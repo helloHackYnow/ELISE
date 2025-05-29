@@ -84,8 +84,7 @@ private:
     LightManager light_manager;
 
     int light_count = 12;
-    std::unordered_map<std::string, std::vector<size_t>> groups {};
-    std::vector<std::string> group_names {};
+    std::vector<Group> groups;
 
     // Player state
     float playback_speed = 1.0f;

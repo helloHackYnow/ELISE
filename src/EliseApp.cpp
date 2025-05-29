@@ -127,8 +127,8 @@ void EliseApp::init_light_manager() {
     }
 
     for (auto & group: groups) {
-        auto & name = group.first;
-        auto & ids = group.second;
+        auto & name = group.name;
+        auto & ids = group.lights;
 
         light_manager.new_group(ids);
     }
@@ -249,7 +249,7 @@ void EliseApp::draw_keyframe_edition_window() {
             std::vector<const char*> listbox_buff;
 
             for (auto & command: keyframe.commands) {
-                commands.push_back("Command on group " + group_names[command.group_id]);
+                commands.push_back("Command on group " + groups[command.group_id].name);
                 listbox_buff.push_back(commands.back().c_str());
             }
 
@@ -298,10 +298,10 @@ void EliseApp::draw_command_edition_window() {
             ImGui::Spacing();
             ImGui::Separator();
 
-            if (ImGui::BeginCombo("Group", group_names[command.group_id].c_str())) {
-                for (int n = 0; n < group_names.size(); n++) {
+            if (ImGui::BeginCombo("Group", groups[command.group_id].name.c_str())) {
+                for (int n = 0; n < groups.size(); n++) {
                     const bool is_selected = (command.group_id == n);
-                    if (ImGui::Selectable(group_names[n].c_str(), is_selected))
+                    if (ImGui::Selectable(groups[n].name.c_str(), is_selected))
                         command.group_id = n;
 
                     if (is_selected)
@@ -500,8 +500,7 @@ void EliseApp::update_keyframes() {
 }
 
 void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids) {
-    groups.insert({name, ids});
-    group_names.push_back(name);
+    groups.push_back(Group(name, ids));
 }
 
 void EliseApp::on_save() {

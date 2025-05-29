@@ -71,7 +71,6 @@ LightManager::LightManager() {
 int LightManager::addLight() {
     auto light_id = lights.size();
     lights.push_back(AnimationDesc{});
-    group_ids.push_back({light_id});
     light_states.push_back(Color{0, 0, 0, 0});
     return light_id;
 }
