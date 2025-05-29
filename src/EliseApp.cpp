@@ -170,10 +170,9 @@ void EliseApp::draw_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             ImGui::MenuItem("New");
-            ImGui::MenuItem("Open");
+            if (ImGui::MenuItem("Open")) on_load();
             ImGui::Separator();
-            ImGui::MenuItem("Save");
-            ImGui::MenuItem("Save As");
+            if (ImGui::MenuItem("Save")) on_save();
             ImGui::Separator();
             ImGui::MenuItem("Export");
             ImGui::EndMenu();
@@ -254,7 +253,7 @@ void EliseApp::draw_keyframe_edition_window() {
                 listbox_buff.push_back(commands.back().c_str());
             }
 
-            ImGui::ListBox("###", &selected_command, listbox_buff.data(), listbox_buff.size());
+            ImGui::ListBox("###", &selected_command, listbox_buff.data(), listbox_buff.size(), 6);
 
 
 
@@ -311,11 +310,6 @@ void EliseApp::draw_command_edition_window() {
                 ImGui::EndCombo();
             }
 
-
-            ImGui::Spacing();
-            ImGui::Text("Animation");
-            ImGui::Separator();
-
             if (ImGui::BeginCombo("Kind", AnimationKind_to_str(command.animation.kind)))
             {
                 for (int n = 0; n < IM_ARRAYSIZE(AnimationKind_str); n++)
@@ -330,6 +324,10 @@ void EliseApp::draw_command_edition_window() {
                 }
                 ImGui::EndCombo();
             }
+
+            ImGui::Spacing();
+            ImGui::Text("Animation");
+            ImGui::Separator();
 
             switch (command.animation.kind) {
                 case AnimationKind::gradient : {
@@ -505,3 +503,32 @@ void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids
     groups.insert({name, ids});
     group_names.push_back(name);
 }
+
+void EliseApp::on_save() {
+    const char* filters[] = { "*.elise" };
+    const char* filename = tinyfd_saveFileDialog("Save ELISE project", nullptr, 1, filters, "ELISE project file");
+    if(filename) save_project(filename);
+}
+
+void EliseApp::on_load() {
+    const char* filters[] = { "*.elise" };
+    const char* filename = tinyfd_openFileDialog("Open ELISE project", nullptr, 1, filters, "ELISE project file", false);
+    if(filename) load_project(filename);
+}
+
+void EliseApp::save_project(const std::string &path) {
+    ProjectData project_data;
+    project_data.keyframes = keyframes;
+    project_data.groups = {};
+
+    save(path, project_data);
+}
+
+void EliseApp::load_project(const std::string &path) {
+    ProjectData p = load(path);
+    keyframes = p.keyframes;
+
+    order_keyframes();
+    update_keyframes();
+}
+

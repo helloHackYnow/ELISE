@@ -4,8 +4,14 @@
 
 #ifndef LIGHTMANAGER_H
 #define LIGHTMANAGER_H
+#include <string>
 #include <vector>
 #include "InterpolationUtils.h"
+
+struct Group {
+    std::string name;
+    std::vector<int> lights;
+};
 
 struct Color {
     int r = 0;
@@ -117,6 +123,16 @@ struct Command {
     int trigger_sample;
     int group_id;
 };
+
+struct Keyframe {
+    int trigger_sample;
+
+    std::vector<Command> commands;
+};
+
+inline bool compare(const Keyframe& a, const Keyframe& b) {
+    return a.trigger_sample < b.trigger_sample;
+}
 
 void retimeCommand(Command& command, int current_sample);
 

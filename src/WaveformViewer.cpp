@@ -660,3 +660,7 @@ void WaveformViewer::set_keyframes(const std::vector<float> &keyframes) {
     this->keyframes = keyframes;
 }
 
+void WaveformViewer::set_selected_keyframe(int keyframe) {
+    selected_keyframe = keyframe;
+}
+

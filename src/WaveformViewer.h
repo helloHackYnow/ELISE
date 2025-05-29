@@ -99,6 +99,7 @@ public:
     void set_waveform_data(const std::vector<float> waveform_data);
 
     void set_keyframes(const std::vector<float>& keyframes);
+    void set_selected_keyframe(int keyframe);
 
 };
 

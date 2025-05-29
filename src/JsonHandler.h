@@ -1,0 +1,52 @@
+//
+// Created by victor on 28/05/25.
+//
+
+#ifndef JSONHANDLER_H
+#define JSONHANDLER_H
+
+#include "../libs/nlohmann/json.hpp"
+#include "LightManager.h"
+
+struct ProjectData {
+    std::vector<Group> groups;
+    std::vector<Keyframe> keyframes;
+};
+
+using json = nlohmann::json;
+
+void to_json(json& j, const Group& group);
+void from_json(const json& j, Group& group);
+
+void to_json(json& j, const GradientKind& kind);
+void from_json(const json& j, GradientKind& kind);
+
+void to_json(json& j, const ToggleInfo& info);
+void from_json(const json& j, ToggleInfo& info);
+
+void to_json(json& j, const GradientInfo& info);
+void from_json(const json& j, GradientInfo& info);
+
+void to_json(json& j, const AnimationKind& kind);
+void from_json(const json& j, AnimationKind& kind);
+
+void to_json(json& j, const AnimationDesc& desc);
+void from_json(const json& j, AnimationDesc& desc);
+
+void to_json(json& j, const Command& command);
+void from_json(const json& j, Command& command);
+
+void to_json(json& j, const Color& c);
+void from_json(const json& j, Color& c);
+
+void to_json(json& j, const Keyframe& k);
+void from_json(const json& j, Keyframe& k);
+
+void to_json(json& j, const ProjectData& p);
+void from_json(const json& j, ProjectData& p);
+
+ProjectData load(const std::string& path);
+void save(const std::string& path, const ProjectData& data);
+
+
+#endif //JSONHANDLER_H

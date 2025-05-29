@@ -6,6 +6,7 @@
 #define ELISEAPP_H
 #define GLFW_INCLUDE_NONE
 #include <iostream>
+#include <map>
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -17,16 +18,8 @@
 #include "Viewport.h"
 #include "LightManager.h"
 #include "ImGui_themes.h"
+#include "JsonHandler.h"
 
-struct Keyframe {
-    int trigger_sample;
-
-    std::vector<Command> commands;
-};
-
-inline bool compare(const Keyframe& a, const Keyframe& b) {
-    return a.trigger_sample < b.trigger_sample;
-}
 
 class EliseApp {
 
@@ -75,6 +68,12 @@ private:
 
     void new_group(const std::string& name, const std::vector<size_t>& ids);
 
+    void on_save();
+    void on_load();
+
+    void save_project(const std::string& path);
+    void load_project(const std::string& path);
+
 
 private:
     GLFWwindow* window;
@@ -92,6 +91,7 @@ private:
     float playback_speed = 1.0f;
 
     // Keyframes
+    std::map<int, Keyframe> keyframes_map {};
     std::vector<Keyframe> keyframes;
     int selected_keyframe = -1;
     bool is_keyframe_edition_window_visible = false;

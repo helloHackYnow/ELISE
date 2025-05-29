@@ -47,6 +47,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/LightManager.h
         src/LightManager.cpp
         src/ImGui_themes.h
+        src/JsonHandler.cpp
+        src/JsonHandler.h
 )
 
 find_package(OpenGL REQUIRED)
