@@ -570,14 +570,7 @@ int WaveformViewer::get_first_note_at_sample(int sample) const {
 }
 
 WaveformViewer::WaveformViewer() {
-    // Generate sample waveform data (sine wave with some noise)
-    waveform_data.resize(44100);
-    for (int i = 0; i < waveform_data.size(); ++i) {
-        float t = (float)i / 44100.0f;
-        waveform_data[i] = 0.8f * sin(2.0f * M_PI * 440.0f * t) +
-                        0.3f * sin(2.0f * M_PI * 1760.0f * t) +
-                        0.1f * ((std::rand() % 100) / 100.0f - 0.5f);
-    }
+
 }
 
 void WaveformViewer::draw() {
