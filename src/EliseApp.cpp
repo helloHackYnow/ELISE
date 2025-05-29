@@ -157,7 +157,6 @@ void EliseApp::compile_commands() {
 
 void EliseApp::draw() {
     draw_menu_bar();
-    draw_project_manager();
     draw_player();
     draw_keyframe_edition_window();
     draw_command_edition_window();
@@ -174,7 +173,8 @@ void EliseApp::draw_menu_bar() {
             ImGui::Separator();
             if (ImGui::MenuItem("Save")) on_save();
             ImGui::Separator();
-            ImGui::MenuItem("Export");
+            if (ImGui::MenuItem("Export")) on_export();
+
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Window")) {
@@ -190,11 +190,12 @@ void EliseApp::draw_menu_bar() {
     }
 }
 
-void EliseApp::draw_project_manager() {
-    if (ImGui::Begin("Project", &is_project_manager_visible)) {
-        ImGui::Text("Project");
+void EliseApp::draw_player() {
+    if (ImGui::Begin("Audio player")) {
 
-        if (ImGui::Button("Load song")) {
+        ImGui::Text("Audio file");
+        ImGui::Separator();
+        if (ImGui::Button("Load audio")) {
             const char* filters[] = { "*.mp3" };
             const char* filename = tinyfd_openFileDialog("Open MP3", "./ressources", 1, filters, "MP3 Files", 0);
 
@@ -205,13 +206,9 @@ void EliseApp::draw_project_manager() {
             }
         }
 
-        ImGui::End();
-    }
-}
-
-void EliseApp::draw_player() {
-    if (ImGui::Begin("Player")) {
+        ImGui::Spacing();
         ImGui::Text("Player");
+        ImGui::Separator();
         if (ImGui::Button("Play")) {
             play_audio();
         }
@@ -220,8 +217,9 @@ void EliseApp::draw_player() {
             stop_audio();
         }
 
-        ImGui::Separator();
+        ImGui::Spacing();
         ImGui::Text("Playback option");
+        ImGui::Separator();
 
         if ( ImGui::DragFloat("Speed", &playback_speed, 0.01f, 0.1f, 10.0f) && audio_manager.isPlaying()) {
             stop_audio();
@@ -513,6 +511,18 @@ void EliseApp::on_load() {
     const char* filters[] = { "*.elise" };
     const char* filename = tinyfd_openFileDialog("Open ELISE project", nullptr, 1, filters, "ELISE project file", false);
     if(filename) load_project(filename);
+}
+
+void EliseApp::on_export() {
+    order_keyframes();
+
+    ProjectData project_data;
+    project_data.keyframes = keyframes;
+    project_data.groups = groups;
+    project_data.light_count = light_count;
+    project_data.sample_rate = audio_manager.getSampleRate();
+
+    std::cout << generate_python_script(project_data) << std::endl;
 }
 
 void EliseApp::save_project(const std::string &path) {

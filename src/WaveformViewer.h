@@ -32,10 +32,10 @@ private:
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
 
-    bool follow_cursor = false;
+    bool is_auto_scroll_enabled = false;
 
     // Debug window
-    bool should_draw_debug = true;
+    bool should_draw_debug = false;
 
     // View parameters
     float min_horizontal_zoom = 0.0001f;

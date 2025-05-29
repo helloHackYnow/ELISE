@@ -182,12 +182,14 @@ void from_json(const json &j, Keyframe &k) {
 
 void to_json(json &j, const ProjectData &p) {
     j = json{
+        {"light_count", p.light_count},
         {"groups", p.groups},
         {"keyframes", p.keyframes}
     };
 }
 
 void from_json(const json &j, ProjectData &p) {
+    j.at("light_count").get_to(p.light_count);
     j.at("groups").get_to(p.groups);
     j.at("keyframes").get_to(p.keyframes);
 }

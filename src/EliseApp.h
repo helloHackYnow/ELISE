@@ -19,6 +19,7 @@
 #include "LightManager.h"
 #include "ImGui_themes.h"
 #include "JsonHandler.h"
+#include "Exporter.h"
 
 
 class EliseApp {
@@ -38,7 +39,6 @@ private:
     void draw();
 
     void draw_menu_bar();
-    void draw_project_manager();
     void draw_player();
     void draw_viewport();
     void draw_keyframe_edition_window();
@@ -70,6 +70,7 @@ private:
 
     void on_save();
     void on_load();
+    void on_export();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);

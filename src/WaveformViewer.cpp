@@ -13,11 +13,17 @@
 
 void WaveformViewer::drawMenuBar() {
     ImGui::BeginMenuBar();
-    if (ImGui::BeginMenu("Debug")) {
-        ImGui::MenuItem("Enable Feature", NULL, &should_draw_debug);
-        ImGui::EndMenu();
-    }
 
+    ImGui::Spacing();
+    ImGui::Checkbox(" Waveform", &show_waveform);
+    ImGui::Spacing();
+    ImGui::BeginDisabled(computing_envelope);
+    ImGui::Checkbox(" Envelope", &show_envelope);
+    ImGui::EndDisabled();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::Checkbox("Auto scroll", &is_auto_scroll_enabled);
     ImGui::EndMenuBar();
 }
 
@@ -331,7 +337,7 @@ void WaveformViewer::drawDebugWindow() {
 
         ImGui::Separator();
         ImGui::Text("Cursor");
-        ImGui::Checkbox("Follow Cursor", &follow_cursor);
+        ImGui::Checkbox("Follow Cursor", &is_auto_scroll_enabled);
 
         ImGui::Separator();
         ImGui::Text("Audio Processing:");
@@ -518,7 +524,7 @@ float WaveformViewer::amplitudeToPixel(float amplitude, float canvas_height) con
 }
 
 void WaveformViewer::update_offset(float canvas_width) {
-    if (follow_cursor) {
+    if (is_auto_scroll_enabled) {
         if (cursor_position > horizontal_offset + canvas_width / 4 / horizontal_zoom) {
             horizontal_offset = cursor_position - canvas_width / 4 / horizontal_zoom;
         }
@@ -648,6 +654,7 @@ void WaveformViewer::set_sample_rate(float sample_rate) {
 
 void WaveformViewer::set_waveform_data(const std::vector<float> waveform_data) {
     this->waveform_data = waveform_data;
+    computeEnvelope();
 }
 
 void WaveformViewer::set_keyframes(const std::vector<float> &keyframes) {

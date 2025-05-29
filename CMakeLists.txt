@@ -49,6 +49,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/ImGui_themes.h
         src/JsonHandler.cpp
         src/JsonHandler.h
+        src/Exporter.cpp
+        src/Exporter.h
 )
 
 find_package(OpenGL REQUIRED)

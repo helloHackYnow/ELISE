@@ -34,7 +34,7 @@ Color computeGradientColor(const GradientInfo &gradient, int sample) {
 }
 
 Color computeToggleColor(const ToggleInfo &toggle, int sample) {
-    return toggle.is_on ? toggle.color : Color{0, 0, 0, 0};
+    return toggle.is_on ? toggle.color : Color{0, 0, 0, 255};
 }
 
 void retimeCommand(Command &command, int new_sample) {

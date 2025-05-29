@@ -9,6 +9,8 @@
 #include "LightManager.h"
 
 struct ProjectData {
+    size_t light_count = 12;
+    int sample_rate = 44100;
     std::vector<Group> groups;
     std::vector<Keyframe> keyframes;
 };
