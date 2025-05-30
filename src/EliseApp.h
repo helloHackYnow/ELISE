@@ -11,7 +11,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#include "../libs/tinyfiledialogs.h"
 #include "WaveformViewer.h"
 #include "AudioManager.h"
 #include <GLFW/glfw3.h>
@@ -20,6 +19,8 @@
 #include "ImGui_themes.h"
 #include "JsonHandler.h"
 #include "Exporter.h"
+#include "../libs/portable_file_dialog.h"
+#include "file_utils.h"
 
 
 class EliseApp {

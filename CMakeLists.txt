@@ -36,7 +36,6 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/EliseApp.h
         src/AudioManager.cpp
         src/AudioManager.h
-        libs/tinyfiledialogs.c
         src/AudioUtils.cpp
         src/AudioUtils.h
         libs/glad/src/glad.c
@@ -51,6 +50,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/JsonHandler.h
         src/Exporter.cpp
         src/Exporter.h
+        libs/portable_file_dialog.h
+        src/file_utils.h
 )
 
 find_package(OpenGL REQUIRED)

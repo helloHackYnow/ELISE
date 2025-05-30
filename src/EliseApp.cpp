@@ -4,6 +4,8 @@
 
 #include "EliseApp.h"
 
+#include <filesystem>
+
 #include "imgui_internal.h"
 
 
@@ -196,11 +198,10 @@ void EliseApp::draw_player() {
         ImGui::Text("Audio file");
         ImGui::Separator();
         if (ImGui::Button("Load audio")) {
-            const char* filters[] = { "*.mp3" };
-            const char* filename = tinyfd_openFileDialog("Open MP3", "./ressources", 1, filters, "MP3 Files", 0);
+            auto filename = pfd::open_file("Open MP3", "", {"MP3 file", "*.mp3"}, false).result();
 
-            if (filename) {
-                audio_manager.loadMP3(filename);
+            if (filename.size() > 0) {
+                audio_manager.loadMP3(filename.at(0));
                 waveform_viewer.set_waveform_data(audio_manager.getOriginalSamples());
                 waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
             }
@@ -502,15 +503,14 @@ void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids
 }
 
 void EliseApp::on_save() {
-    const char* filters[] = { "*.elise" };
-    const char* filename = tinyfd_saveFileDialog("Save ELISE project", nullptr, 1, filters, "ELISE project file");
-    if(filename) save_project(filename);
+    auto filename = pfd::save_file("Save ELISE project", "", {"ELISE project", "*.elise"}, false).result();
+    filename = ensure_extension(filename, ".elise");
+    if(filename.size() > 1) save_project(filename);
 }
 
 void EliseApp::on_load() {
-    const char* filters[] = { "*.elise" };
-    const char* filename = tinyfd_openFileDialog("Open ELISE project", nullptr, 1, filters, "ELISE project file", false);
-    if(filename) load_project(filename);
+    auto filename = pfd::open_file("Select ELISE project", "", {"ELISE project", "*.elise"}, false).result();
+    if(filename.size() > 1) load_project(filename.at(0));
 }
 
 void EliseApp::on_export() {
