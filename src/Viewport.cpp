@@ -67,7 +67,7 @@ void Viewport::init(int width, int height) {
     height_ = height;
 
     // default white colors
-    for(auto& c : colors_) c = glm::vec4(.9f, 0.f, .6f, 100.0f);
+    for(auto& c : colors_) c = glm::vec4(.0f, 0.f, .0f, 100.0f);
 
     initShaders();
     initQuad();

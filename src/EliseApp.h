@@ -58,12 +58,15 @@ private:
 
     // Keyframes handling
     void order_keyframes();
-    void key_frame_creation_callback(float sample);
-    void key_frame_deletion_callback(int keyframe_index);
+    void build_keyframe_uuid_to_index_map();
 
+
+    // Callback
+    void key_frame_creation_callback(int64_t sample);
+    void key_frame_deletion_callback(int64_t keyframe_uuid);
     // New sample: sample the keyframe has been displaced to
-    void key_frame_drag_callback(int keyframe_index, int64_t new_sample);
-    void key_frame_selection_callback(int keyframe_index);
+    void key_frame_drag_callback(int64_t keyframe_uuid, int64_t new_sample);
+    void key_frame_selection_callback(int64_t keyframe_uuid);
 
     void update_keyframes();
 
@@ -92,12 +95,14 @@ private:
     float playback_speed = 1.0f;
 
     // Keyframes
-    std::map<int, Keyframe> keyframes_map {};
     std::vector<Keyframe> keyframes;
-    int selected_keyframe = -1;
-    bool is_keyframe_edition_window_visible = false;
+    std::map<int64_t, int> keyframe_uuid_to_index;
+    int64_t selected_keyframe_uuid = -1;
+    int64_t max_keyframe_uuid = 0;
+    bool is_keyframe_edition_window_visible = true;
 
     // Commands
+    std::unordered_map<int64_t, std::vector<Command>> keyframe_uuid_to_commands;
     int selected_command = -1;
     bool is_command_edition_window_visible = false;
 

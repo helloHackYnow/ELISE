@@ -216,10 +216,10 @@ void WaveformViewer::drawCursor(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2
 
 void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2 canvas_size) {
     for (int i = 0; i < keyframes.size(); ++i) {
-        float keyframe_x = sampleToPixel(keyframes[i], canvas_size.x);
+        float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
         if (keyframe_x >= -10 && keyframe_x <= canvas_size.x + 10) {
-            ImU32 line_color = (i == selected_keyframe) ? IM_COL32(255, 100, 100, 255) : IM_COL32(255, 150, 0, 200);
-            ImU32 handle_color = (i == selected_keyframe) ? IM_COL32(255, 150, 150, 255) : IM_COL32(255, 200, 100, 255);
+            ImU32 line_color = (keyframes[i].uuid == selected_keyframe_uuid) ? IM_COL32(255, 100, 100, 255) : IM_COL32(255, 150, 0, 200);
+            ImU32 handle_color = (keyframes[i].uuid == selected_keyframe_uuid) ? IM_COL32(255, 150, 150, 255) : IM_COL32(255, 200, 100, 255);
 
             // Draw keyframe line
             draw_list->AddLine(ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + 15),
@@ -446,21 +446,21 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
 
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
                 // Check if clicking on keyframe handle
-                selected_keyframe = -1;
+                selected_keyframe_uuid = -1;
                 float mouse_y = mouse_pos.y - canvas_pos.y;
 
                 for (int i = 0; i < keyframes.size(); ++i) {
-                    float keyframe_x = sampleToPixel(keyframes[i], canvas_size.x);
+                    float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
                     // Check if clicking on the handle (top 20 pixels)
                     if (abs(mouse_x - keyframe_x) < 8.0f && mouse_y < 20.0f) {
-                        selected_keyframe = i;
-                        key_frame_selection_callback(i);
+                        selected_keyframe_uuid = keyframes[i].uuid;
+                        key_frame_selection_callback(selected_keyframe_uuid);
                         dragging_keyframe = true;
                         break;
                     }
                 }
 
-                if (selected_keyframe == -1) {
+                if (selected_keyframe_uuid == -1) {
                     // Move cursor
                     cursor_position = pixelToSample(mouse_x, canvas_size.x);
                     cursor_position = std::clamp(cursor_position, 0.0f, (float)waveform_data.size());
@@ -469,8 +469,8 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                if (dragging_keyframe && selected_keyframe >= 0) {
-                    key_frame_drag_callback(selected_keyframe, int(pixelToSample(mouse_x, canvas_size.x)));
+                if (dragging_keyframe && selected_keyframe_uuid >= 0) {
+                    key_frame_drag_callback(selected_keyframe_uuid, int(pixelToSample(mouse_x, canvas_size.x)));
                 } else if (dragging_cursor) {
                     cursor_position = pixelToSample(mouse_x, canvas_size.x);
                     cursor_position = std::clamp(cursor_position, 0.0f, (float)waveform_data.size());
@@ -481,14 +481,18 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                 dragging_cursor = false;
                 dragging_keyframe = false;
             }
+        } else {
+            dragging_cursor = false;
+            dragging_keyframe = false;
+            selected_keyframe_uuid = -1;
         }
 
         // Handle Enter key for adding keyframes
         if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Enter)) {
             // Check if keyframe already exists at cursor position
             bool exists = false;
-            for (float kf : keyframes) {
-                if (abs(kf - cursor_position) < getSamplesPerPixel()) {
+            for (auto& kf : keyframes) {
+                if (abs(kf.trigger_sample - cursor_position) < getSamplesPerPixel()) {
                     exists = true;
                     break;
                 }
@@ -496,14 +500,14 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
 
             if (!exists) {
                 key_frame_creation_callback(cursor_position);
-                selected_keyframe = -1;
+                selected_keyframe_uuid = -1;
             }
         }
 
         // Handle Delete key for removing selected keyframe
-        if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Delete) && selected_keyframe >= 0) {
-            key_frame_deletion_callback(selected_keyframe);
-            selected_keyframe = -1;
+        if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Delete) && selected_keyframe_uuid >= 0) {
+            key_frame_deletion_callback(selected_keyframe_uuid);
+            selected_keyframe_uuid = -1;
         }
 }
 
@@ -652,16 +656,16 @@ void WaveformViewer::set_sample_rate(float sample_rate) {
     this->sample_rate = sample_rate;
 }
 
-void WaveformViewer::set_waveform_data(const std::vector<float> waveform_data) {
+void WaveformViewer::set_waveform_data(const std::vector<float>& waveform_data) {
     this->waveform_data = waveform_data;
     computeEnvelope();
 }
 
-void WaveformViewer::set_keyframes(const std::vector<float> &keyframes) {
+void WaveformViewer::set_keyframes(const std::vector<Keyframe>& keyframes) {
     this->keyframes = keyframes;
 }
 
-void WaveformViewer::set_selected_keyframe(int keyframe) {
-    selected_keyframe = keyframe;
+void WaveformViewer::set_selected_keyframe(int64_t keyframe) {
+    selected_keyframe_uuid = keyframe;
 }
 

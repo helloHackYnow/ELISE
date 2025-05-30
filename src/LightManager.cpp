@@ -16,7 +16,7 @@ Color interpolate_linear(Color a, Color b, float t) {
     };
 }
 
-Color computeGradientColor(const GradientInfo &gradient, int sample) {
+Color computeGradientColor(const GradientInfo &gradient, int64_t sample) {
     double t = std::clamp((sample - gradient.start_sample) / (double) gradient.duration, 0.0, 1.0);
 
     switch (gradient.kind) {
@@ -33,11 +33,11 @@ Color computeGradientColor(const GradientInfo &gradient, int sample) {
     }
 }
 
-Color computeToggleColor(const ToggleInfo &toggle, int sample) {
+Color computeToggleColor(const ToggleInfo &toggle, int64_t sample) {
     return toggle.is_on ? toggle.color : Color{0, 0, 0, 255};
 }
 
-void retimeCommand(Command &command, int new_sample) {
+void retimeCommand(Command &command, int64_t new_sample) {
     command.trigger_sample = new_sample;
 
     switch (command.animation.kind) {
@@ -50,7 +50,7 @@ void retimeCommand(Command &command, int new_sample) {
     }
 }
 
-Color computeAnimationColor(const AnimationDesc &animation, int sample) {
+Color computeAnimationColor(const AnimationDesc &animation, int64_t sample) {
     switch (animation.kind) {
         case AnimationKind::toggle : {
             return computeToggleColor(animation.toggle, sample);
@@ -71,7 +71,7 @@ LightManager::LightManager() {
 int LightManager::addLight() {
     auto light_id = lights.size();
     lights.push_back(AnimationDesc{});
-    light_states.push_back(Color{0, 0, 0, 0});
+    light_states.push_back(Color{0, 0, 0, 255});
     return light_id;
 }
 
@@ -81,12 +81,12 @@ int LightManager::new_group(std::vector<size_t> light_ids) {
     return group_id;
 }
 
-void LightManager::update(int current_sample) {
+void LightManager::update(int64_t current_sample) {
     updateAnimations(current_sample);
     updateLightStates(current_sample);
 }
 
-void LightManager::updateAnimations(int current_sample) {
+void LightManager::updateAnimations(int64_t current_sample) {
 
     while (!commands.empty() && commands.back().trigger_sample <= current_sample) {
         auto command = commands.back();
@@ -100,7 +100,7 @@ void LightManager::updateAnimations(int current_sample) {
     }
 }
 
-void LightManager::updateLightStates(int current_sample) {
+void LightManager::updateLightStates(int64_t current_sample) {
     for (int i = 0; i < light_states.size(); i++) {
         light_states[i] = computeAnimationColor(lights.at(i), current_sample);
     }
@@ -115,7 +115,7 @@ void LightManager::reset() {
         light = AnimationDesc{};
     }
     for (auto& light_state : light_states) {
-        light_state = Color{0, 0, 0, 0};
+        light_state = Color{0, 0, 0, 255};
     }
 
     commands.clear();

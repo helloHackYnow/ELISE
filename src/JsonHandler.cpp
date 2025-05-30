@@ -164,34 +164,55 @@ void from_json(const json &j, Color &c) {
     j.at("a").get_to(c.a);
 }
 
-void to_json(json &j, const Keyframe &k) {
+void to_json(json &j, const JsonKeyframes &k) {
     j = json{
         {"trigger_sample", k.trigger_sample},
         {"commands", k.commands}
     };
 }
 
-void from_json(const json &j, Keyframe &k) {
+void from_json(const json &j, JsonKeyframes &k) {
     j.at("trigger_sample").get_to(k.trigger_sample);
     j.at("commands").get_to(k.commands);
-
-    for (auto& command : k.commands) {
-        retimeCommand(command, k.trigger_sample);
-    }
 }
 
+
 void to_json(json &j, const ProjectData &p) {
+    std::vector<JsonKeyframes> json_keyframes;
+
+    for (auto & keyframe: p.keyframes) {
+        JsonKeyframes json_keyframe;
+        json_keyframe.trigger_sample = keyframe.trigger_sample;
+        json_keyframe.commands = p.keyframe_uuid_to_commands.at(keyframe.uuid);
+        json_keyframes.push_back(json_keyframe);
+    }
+
     j = json{
         {"light_count", p.light_count},
         {"groups", p.groups},
-        {"keyframes", p.keyframes}
+        {"keyframes", json_keyframes}
     };
 }
 
 void from_json(const json &j, ProjectData &p) {
     j.at("light_count").get_to(p.light_count);
     j.at("groups").get_to(p.groups);
-    j.at("keyframes").get_to(p.keyframes);
+
+    std::vector<JsonKeyframes> json_keyframes;
+    j.at("keyframes").get_to(json_keyframes);
+
+    p.keyframes.clear();
+    p.keyframe_uuid_to_commands.clear();
+
+    int64_t uuid = 0;
+    for (auto & json_keyframe: json_keyframes) {
+        Keyframe keyframe;
+        keyframe.trigger_sample = json_keyframe.trigger_sample;
+        keyframe.uuid = uuid++;
+        p.keyframes.push_back(keyframe);
+
+        p.keyframe_uuid_to_commands[keyframe.uuid] = json_keyframe.commands;
+    }
 }
 
 ProjectData load(const std::string &path) {

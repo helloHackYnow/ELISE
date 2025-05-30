@@ -97,18 +97,18 @@ struct GradientInfo {
     Color end_color;
     GradientKind kind;
 
-    int start_sample;
+    int64_t start_sample;
     int duration; // In sample count
 };
 
-Color computeGradientColor(const GradientInfo& gradient, int sample);
+Color computeGradientColor(const GradientInfo& gradient, int64_t sample);
 
 struct ToggleInfo {
     bool is_on;
     Color color;
 };
 
-Color computeToggleColor(const ToggleInfo& toggle, int sample);
+Color computeToggleColor(const ToggleInfo& toggle, int64_t sample);
 
 struct AnimationDesc {
     AnimationKind kind;
@@ -120,21 +120,20 @@ struct AnimationDesc {
 
 struct Command {
     AnimationDesc animation;
-    int trigger_sample;
+    int64_t trigger_sample;
     int group_id;
 };
 
 struct Keyframe {
-    int trigger_sample;
-
-    std::vector<Command> commands;
+    int64_t trigger_sample;
+    int64_t uuid = -1;
 };
 
 inline bool compare(const Keyframe& a, const Keyframe& b) {
     return a.trigger_sample < b.trigger_sample;
 }
 
-void retimeCommand(Command& command, int current_sample);
+void retimeCommand(Command& command, int64_t current_sample);
 
 Color computeAnimationColor(const AnimationDesc& animation, int sample);
 
@@ -146,11 +145,11 @@ public:
 
     int new_group(std::vector<size_t> light_ids);
 
-    void update(int current_sample);
+    void update(int64_t current_sample);
 
-    void updateAnimations(int current_sample);
+    void updateAnimations(int64_t current_sample);
 
-    void updateLightStates(int current_sample);
+    void updateLightStates(int64_t current_sample);
 
     // Must be ordered by trigger time. The last at [0], the first at [size-1]
     void setCommandStack(const std::vector<Command>& commands);

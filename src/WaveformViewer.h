@@ -11,13 +11,16 @@
 
 #include "imgui.h"
 #include "AudioUtils.h"
+#include "LightManager.h"
+
+
 
 class WaveformViewer {
 public:
-    std::function<void(float)> key_frame_creation_callback = nullptr;
-    std::function<void(int)> key_frame_deletion_callback = nullptr;
-    std::function<void(int, int64_t)> key_frame_drag_callback = nullptr;
-    std::function<void(int)> key_frame_selection_callback = nullptr;
+    std::function<void(int64_t)> key_frame_creation_callback = nullptr;
+    std::function<void(int64_t)> key_frame_deletion_callback = nullptr;
+    std::function<void(int64_t, int64_t)> key_frame_drag_callback = nullptr;
+    std::function<void(int64_t)> key_frame_selection_callback = nullptr;
 
 private:
     std::vector<float> waveform_data;
@@ -27,8 +30,8 @@ private:
     float horizontal_offset = 0.0f; // Sample
     float cursor_position = 0.0f; // Sample
 
-    std::vector<float> keyframes; // sample
-    int selected_keyframe = -1;
+    std::vector<Keyframe> keyframes;
+    int64_t selected_keyframe_uuid = -1;
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
 
@@ -96,11 +99,10 @@ public:
     float get_cursor_position();
 
     void set_sample_rate(float sample_rate);
-    void set_waveform_data(const std::vector<float> waveform_data);
+    void set_waveform_data(const std::vector<float>& waveform_data);
 
-    void set_keyframes(const std::vector<float>& keyframes);
-    void set_selected_keyframe(int keyframe);
-
+    void set_keyframes(const std::vector<Keyframe>& keyframes);
+    void set_selected_keyframe(int64_t keyframe_index);
 };
 
 

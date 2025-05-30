@@ -4,6 +4,9 @@
 
 #include "Exporter.h"
 
+#include <fstream>
+#include <iostream>
+
 std::string get_python_interpolation(const GradientKind &kind) {
     switch (kind) {
         case GradientKind::linear:
@@ -39,7 +42,7 @@ std::string get_python_command(const Command &command, int sample_rate) {
             cmd += get_group_str(command.group_id) + ", ";
             cmd += get_python_color(command.animation.gradient.start_color) + ", ";
             cmd += get_python_color(command.animation.gradient.end_color) + ", ";
-            cmd += sample_to_ms(command.animation.gradient.duration, sample_rate) + ", ";
+            cmd += std::to_string(sample_to_ms(command.animation.gradient.duration, sample_rate)) + ", ";
             cmd += get_python_interpolation(command.animation.gradient.kind) + ")";
             return cmd;
         }
@@ -91,7 +94,7 @@ std::string generate_python_script(const ProjectData &data) {
 
     // Generate commands
     for (auto & keyframe: data.keyframes) {
-        for (auto &command: keyframe.commands) {
+        for (auto &command: data.keyframe_uuid_to_commands.at(keyframe.uuid) ) {
             out += tab + get_python_command(command, data.sample_rate) + new_line;
         }
         out += new_line;
@@ -101,4 +104,16 @@ std::string generate_python_script(const ProjectData &data) {
     out += tab + "return main_return()" + new_line;
 
     return out;
+}
+
+void save_python_script(const std::string &path, const std::string &script) {
+    std::ofstream file(path);
+
+    if (!file.is_open()) {
+        std::cout << "Failed to open file " << path << std::endl;
+        return;
+    }
+
+    file << script;
+    file.close();
 }

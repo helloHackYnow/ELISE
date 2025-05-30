@@ -117,10 +117,15 @@ void EliseApp::init_groups() {
         new_group(buff, {i});
     }
 
-    new_group("all", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
-    new_group("up", {0, 1, 2, 3, 4});
-    new_group("mid", {5, 6});
-    new_group("down", {7, 8, 9, 10, 11});
+    new_group("All", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
+    new_group("Up", {0, 1, 2, 3, 4});
+    new_group("Vertical Mid", {5, 6});
+    new_group("Down", {7, 8, 9, 10, 11});
+
+    new_group("Left", {0, 1, 2, 5, 7, 8});
+    new_group("Right", {3, 4, 6, 8, 9, 10, 11});
+
+    new_group("Horizontal Mid", {2, 3, 5, 6, 8, 9});
 }
 
 void EliseApp::init_light_manager() {
@@ -143,7 +148,7 @@ void EliseApp::compile_commands() {
     order_keyframes();
 
     for (auto & keyframe: keyframes) {
-        for (auto & command: keyframe.commands) {
+        for (auto & command: keyframe_uuid_to_commands[keyframe.uuid]) {
 
             retimeCommand(command, keyframe.trigger_sample);
 
@@ -241,15 +246,15 @@ void EliseApp::draw_keyframe_edition_window() {
 
         ImGui::Separator();
 
-        if (selected_keyframe >= 0) {
-            auto & keyframe = keyframes[selected_keyframe];
-
-            std::vector<std::string> commands;
+        if (selected_keyframe_uuid >= 0) {
+            std::vector<std::string> commands_str;
             std::vector<const char*> listbox_buff;
 
-            for (auto & command: keyframe.commands) {
-                commands.push_back("Command on group " + groups[command.group_id].name);
-                listbox_buff.push_back(commands.back().c_str());
+            auto& commands = keyframe_uuid_to_commands[selected_keyframe_uuid];
+
+            for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {
+                commands_str.push_back("Command on group " + groups[command.group_id].name);
+                listbox_buff.push_back(commands_str.back().c_str());
             }
 
             ImGui::ListBox("###", &selected_command, listbox_buff.data(), listbox_buff.size(), 6);
@@ -257,14 +262,14 @@ void EliseApp::draw_keyframe_edition_window() {
 
 
             if (ImGui::Button("Add")) {
-                keyframe.commands.push_back(Command{});
+                commands.push_back(Command{});
             }
 
             ImGui::SameLine();
 
-            ImGui::BeginDisabled(selected_command < 0 || selected_command >= keyframe.commands.size());
+            ImGui::BeginDisabled(selected_command < 0 || selected_command >= commands.size());
             if (ImGui::Button("Delete")) {
-                keyframe.commands.erase(keyframes[selected_keyframe].commands.begin() + selected_command);
+                commands.erase(commands.begin() + selected_command);
             }
 
             ImGui::EndDisabled();
@@ -285,12 +290,14 @@ void EliseApp::draw_keyframe_edition_window() {
 
 void EliseApp::draw_command_edition_window() {
     if (ImGui::Begin("Command", &is_command_edition_window_visible)) {
-        if (selected_keyframe < 0 || selected_command < 0 || selected_command >= keyframes[selected_keyframe].commands.size()) {
+        if (selected_keyframe_uuid < 0
+            || selected_command < 0
+            || selected_command >= keyframe_uuid_to_commands[selected_keyframe_uuid].size()) {
             ImGui::BeginDisabled();
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
         } else {
-            auto & command = keyframes[selected_keyframe].commands[selected_command];
+            auto & command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
 
             ImGui::Text("Command %d", selected_command);
 
@@ -460,40 +467,61 @@ void EliseApp::stop_audio() {
 
 void EliseApp::order_keyframes() {
     std::sort(keyframes.begin(), keyframes.end(), compare);
+    build_keyframe_uuid_to_index_map();
 }
 
-void EliseApp::key_frame_creation_callback(float sample) {
+void EliseApp::build_keyframe_uuid_to_index_map() {
+    keyframe_uuid_to_index.clear();
 
-    keyframes.push_back(Keyframe{int(sample), {Command{}}});
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+        keyframe_uuid_to_index[keyframes[i].uuid] = i;
+    }
+}
+
+void EliseApp::key_frame_creation_callback(int64_t sample) {
+    max_keyframe_uuid++;
+    keyframes.push_back(Keyframe{sample, max_keyframe_uuid});
+
+    // Create empty command
+    keyframe_uuid_to_commands[max_keyframe_uuid].push_back(Command{});
+
     order_keyframes();
     update_keyframes();
 
-    selected_keyframe = -1;
+    waveform_viewer.set_selected_keyframe(max_keyframe_uuid);
+    selected_keyframe_uuid = max_keyframe_uuid;
+    selected_command = 0;
 }
 
-// TODO : optimization
-void EliseApp::key_frame_deletion_callback(int keyframe_index) {
-    keyframes.erase(keyframes.begin() + keyframe_index);
+void EliseApp::key_frame_deletion_callback(int64_t keyframe_uuid) {
+    auto index = keyframe_uuid_to_index[keyframe_uuid];
+
+    keyframes.erase(keyframes.begin() + index);
+    keyframe_uuid_to_commands.erase(keyframe_uuid);
+    build_keyframe_uuid_to_index_map();
+
     update_keyframes();
-    selected_keyframe = -1;
+    selected_keyframe_uuid = -1;
 }
 
-void EliseApp::key_frame_drag_callback(int keyframe_index, int64_t new_sample) {
-    keyframes[keyframe_index].trigger_sample = new_sample;
-    for (auto & command: keyframes[keyframe_index].commands) {retimeCommand(command, new_sample);}
-    //order_keyframes();
+
+void EliseApp::key_frame_drag_callback(int64_t keyframe_uuid, int64_t new_sample) {
+    auto& keyframe = keyframes[keyframe_uuid_to_index[keyframe_uuid]];
+    keyframe.trigger_sample = new_sample;
+    for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {retimeCommand(command, new_sample);}
+    order_keyframes();
     update_keyframes();
 }
 
-void EliseApp::key_frame_selection_callback(int keyframe_index) {
-    selected_keyframe = keyframe_index;
+void EliseApp::key_frame_selection_callback(int64_t keyframe_uuid) {
+    selected_keyframe_uuid = keyframe_uuid;
 }
 
 void EliseApp::update_keyframes() {
-    std::vector<float> waveform_keyframes;
+    std::vector<Keyframe> waveform_keyframes;
     waveform_keyframes.reserve(keyframes.size());
 
-    for (auto& keyframe : keyframes) {waveform_keyframes.push_back(float(keyframe.trigger_sample));}
+    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid});}
 
     waveform_viewer.set_keyframes(waveform_keyframes);
 }
@@ -510,7 +538,7 @@ void EliseApp::on_save() {
 
 void EliseApp::on_load() {
     auto filename = pfd::open_file("Select ELISE project", "", {"ELISE project", "*.elise"}, false).result();
-    if(filename.size() > 1) load_project(filename.at(0));
+    if(filename.size() >= 1) load_project(filename.at(0));
 }
 
 void EliseApp::on_export() {
@@ -521,14 +549,23 @@ void EliseApp::on_export() {
     project_data.groups = groups;
     project_data.light_count = light_count;
     project_data.sample_rate = audio_manager.getSampleRate();
+    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
 
-    std::cout << generate_python_script(project_data) << std::endl;
+    auto content = generate_python_script(project_data);
+
+    auto filename = pfd::save_file("Export ELISE project", "", {"Python script", "*.py"}, false).result();
+    filename = ensure_extension(filename, ".py");
+    if(filename.size() > 1) save_python_script(filename, content);
 }
 
 void EliseApp::save_project(const std::string &path) {
+
     ProjectData project_data;
     project_data.keyframes = keyframes;
-    project_data.groups = {};
+    project_data.groups = groups;
+    project_data.light_count = light_count;
+    project_data.sample_rate = audio_manager.getSampleRate();
+    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
 
     save(path, project_data);
 }
@@ -536,6 +573,8 @@ void EliseApp::save_project(const std::string &path) {
 void EliseApp::load_project(const std::string &path) {
     ProjectData p = load(path);
     keyframes = p.keyframes;
+    groups = p.groups;
+    keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
 
     order_keyframes();
     update_keyframes();

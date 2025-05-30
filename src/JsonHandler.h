@@ -13,6 +13,12 @@ struct ProjectData {
     int sample_rate = 44100;
     std::vector<Group> groups;
     std::vector<Keyframe> keyframes;
+    std::unordered_map<int64_t, std::vector<Command>> keyframe_uuid_to_commands;
+};
+
+struct JsonKeyframes {
+    int64_t trigger_sample = 0;
+    std::vector<Command> commands;
 };
 
 using json = nlohmann::json;
@@ -41,8 +47,8 @@ void from_json(const json& j, Command& command);
 void to_json(json& j, const Color& c);
 void from_json(const json& j, Color& c);
 
-void to_json(json& j, const Keyframe& k);
-void from_json(const json& j, Keyframe& k);
+void to_json(json& j, const JsonKeyframes& k);
+void from_json(const json& j, JsonKeyframes& k);
 
 void to_json(json& j, const ProjectData& p);
 void from_json(const json& j, ProjectData& p);

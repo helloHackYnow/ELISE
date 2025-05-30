@@ -10,9 +10,7 @@
 inline const std::string tab = "    ";
 inline const std::string new_line = "\n";
 
-inline const char* python_header = R""""(
-
-from Sequencer.builder_utils import *
+inline const char* python_header = R""""(from Sequencer.builder_utils import *
 
 def build():
 
@@ -30,6 +28,8 @@ std::string get_python_command(const Command& command, int sample_rate);
 
 // Important : the keyframe list must be sorted, and every command must be retimed before generating the python script
 std::string generate_python_script(const ProjectData& data);
+
+void save_python_script(const std::string& path, const std::string& script);
 
 
 
