@@ -32,7 +32,30 @@ bool EliseApp::init() {
         return false;
     }
     glfwMakeContextCurrent(window);
+    glfwMaximizeWindow(window);
     glfwSwapInterval(1); // Enable vsync
+
+    // Load icons
+    GLFWimage icons[2];
+    int channels;
+
+    // Load 16x16 icon
+    icons[0].pixels = stbi_load_from_memory(logo32_png, logo32_png_len,
+                                           &icons[0].width, &icons[0].height,
+                                           &channels, 4);
+
+    // Load 32x32 icon
+    icons[1].pixels = stbi_load_from_memory(logo128_png, logo128_png_len,
+                                           &icons[1].width, &icons[1].height,
+                                           &channels, 4);
+
+    if (icons[0].pixels && icons[1].pixels) {
+        glfwSetWindowIcon(window, 2, icons);
+    }
+
+    // Free both images
+    if (icons[0].pixels) stbi_image_free(icons[0].pixels);
+    if (icons[1].pixels) stbi_image_free(icons[1].pixels);
 
     // Setup ImGui context
     IMGUI_CHECKVERSION();

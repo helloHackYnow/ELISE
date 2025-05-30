@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/Exporter.h
         libs/portable_file_dialog.h
         src/file_utils.h
+        libs/stb_image.h
 )
 
 find_package(OpenGL REQUIRED)

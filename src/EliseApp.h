@@ -22,6 +22,9 @@
 #include "../libs/portable_file_dialog.h"
 #include "file_utils.h"
 
+#include "../libs/stb_image.h"
+#include "../icons/logo32.h"
+#include "../icons/logo128.h"
 
 class EliseApp {
 
