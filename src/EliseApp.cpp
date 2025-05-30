@@ -123,9 +123,15 @@ void EliseApp::init_groups() {
     new_group("Down", {7, 8, 9, 10, 11});
 
     new_group("Left", {0, 1, 2, 5, 7, 8});
-    new_group("Right", {3, 4, 6, 8, 9, 10, 11});
+    new_group("Right", {3, 4, 6, 9, 10, 11});
 
     new_group("Horizontal Mid", {2, 3, 5, 6, 8, 9});
+
+    new_group("Diag up left", {0, 1, 2, 3, 5, 7});
+    new_group("Diag up right", {4, 6, 8, 9, 10, 11});
+
+    new_group("Diag down left", {0, 1, 5, 7, 8, 9});
+    new_group("Diag down right", {2, 3, 4, 6, 10, 11});
 }
 
 void EliseApp::init_light_manager() {
@@ -178,7 +184,6 @@ void EliseApp::draw() {
 void EliseApp::draw_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            ImGui::MenuItem("New");
             if (ImGui::MenuItem("Open")) on_open_project();
             ImGui::Separator();
             if (ImGui::MenuItem("Save")) on_save();
