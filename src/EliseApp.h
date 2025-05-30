@@ -73,11 +73,16 @@ private:
     void new_group(const std::string& name, const std::vector<size_t>& ids);
 
     void on_save();
-    void on_load();
+    void on_open_project();
     void on_export();
+    void on_load_song();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);
+    void export_project(const std::string& path);
+    void load_song(const std::string& path);
+
+    void update_dialogs();
 
 
 private:
@@ -109,6 +114,23 @@ private:
     // Project manager state
     std::string project_path;
     bool is_project_manager_visible = false;
+
+
+    // Threaded File Dialog
+    bool is_dialog_opened = false;
+
+    std::unique_ptr<pfd::open_file> open_project_dialog;
+    bool is_open_project_dialog_active = false;
+
+    std::unique_ptr<pfd::open_file> load_song_dialog;
+    bool is_load_song_dialog_active = false;
+
+    std::unique_ptr<pfd::save_file> save_project_dialog;
+    bool is_save_project_dialog_active = false;
+
+    std::unique_ptr<pfd::save_file> export_project_dialog;
+    bool is_export_project_dialog_active = false;
+
 };
 
 

@@ -163,6 +163,8 @@ void EliseApp::compile_commands() {
 }
 
 void EliseApp::draw() {
+    ImGui::BeginDisabled(is_dialog_opened);
+
     draw_menu_bar();
     draw_player();
     draw_keyframe_edition_window();
@@ -170,13 +172,14 @@ void EliseApp::draw() {
     waveform_viewer.draw();
     viewport.draw();
 
+    ImGui::EndDisabled();
 }
 
 void EliseApp::draw_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             ImGui::MenuItem("New");
-            if (ImGui::MenuItem("Open")) on_load();
+            if (ImGui::MenuItem("Open")) on_open_project();
             ImGui::Separator();
             if (ImGui::MenuItem("Save")) on_save();
             ImGui::Separator();
@@ -202,15 +205,7 @@ void EliseApp::draw_player() {
 
         ImGui::Text("Audio file");
         ImGui::Separator();
-        if (ImGui::Button("Load audio")) {
-            auto filename = pfd::open_file("Open MP3", "", {"MP3 file", "*.mp3"}, false).result();
-
-            if (filename.size() > 0) {
-                audio_manager.loadMP3(filename.at(0));
-                waveform_viewer.set_waveform_data(audio_manager.getOriginalSamples());
-                waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
-            }
-        }
+        if (ImGui::Button("Load audio")) on_load_song();
 
         ImGui::Spacing();
         ImGui::Text("Player");
@@ -428,6 +423,7 @@ void EliseApp::handle_input() {
 }
 
 void EliseApp::update() {
+    update_dialogs();
     handle_input();
     update_waveform_viewer();
     update_light_manager();
@@ -531,32 +527,45 @@ void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids
 }
 
 void EliseApp::on_save() {
-    auto filename = pfd::save_file("Save ELISE project", "", {"ELISE project", "*.elise"}, false).result();
-    filename = ensure_extension(filename, ".elise");
-    if(filename.size() > 1) save_project(filename);
+    save_project_dialog = std::make_unique<pfd::save_file>(
+        "Save ELISE project",
+        "",
+        std::vector<std::string>{"ELISE project", "*.elise"},
+        pfd::opt::none
+        );
+    is_save_project_dialog_active = true;
 }
 
-void EliseApp::on_load() {
-    auto filename = pfd::open_file("Select ELISE project", "", {"ELISE project", "*.elise"}, false).result();
-    if(filename.size() >= 1) load_project(filename.at(0));
+void EliseApp::on_open_project() {
+    open_project_dialog = std::make_unique<pfd::open_file>(
+        "Open ELISE project",
+        "",
+        std::vector<std::string>{"ELISE project", "*.elise"},
+        pfd::opt::none
+        );
+    is_open_project_dialog_active = true;
 }
 
 void EliseApp::on_export() {
-    order_keyframes();
-
-    ProjectData project_data;
-    project_data.keyframes = keyframes;
-    project_data.groups = groups;
-    project_data.light_count = light_count;
-    project_data.sample_rate = audio_manager.getSampleRate();
-    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
-
-    auto content = generate_python_script(project_data);
-
-    auto filename = pfd::save_file("Export ELISE project", "", {"Python script", "*.py"}, false).result();
-    filename = ensure_extension(filename, ".py");
-    if(filename.size() > 1) save_python_script(filename, content);
+    export_project_dialog = std::make_unique<pfd::save_file>(
+        "Export python builder script",
+        "",
+        std::vector<std::string>{"Python script", "*.py"},
+        pfd::opt::none
+        );
+    is_export_project_dialog_active = true;
 }
+
+void EliseApp::on_load_song() {
+    load_song_dialog = std::make_unique<pfd::open_file>(
+        "Load MP3 file",
+        "",
+        std::vector<std::string>{"MP3 file", "*.mp3"},
+        pfd::opt::none
+        );
+    is_load_song_dialog_active = true;
+}
+
 
 void EliseApp::save_project(const std::string &path) {
 
@@ -578,5 +587,61 @@ void EliseApp::load_project(const std::string &path) {
 
     order_keyframes();
     update_keyframes();
+}
+
+void EliseApp::export_project(const std::string &path) {
+    order_keyframes();
+
+    ProjectData project_data;
+    project_data.keyframes = keyframes;
+    project_data.groups = groups;
+    project_data.light_count = light_count;
+    project_data.sample_rate = audio_manager.getSampleRate();
+    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
+
+    auto content = generate_python_script(project_data);
+
+    auto n_path = ensure_extension(path, ".py");
+    if(n_path.size() >= 1) save_python_script(n_path, content);
+}
+
+void EliseApp::load_song(const std::string &path) {
+    audio_manager.loadMP3(path);
+    waveform_viewer.set_waveform_data(audio_manager.getOriginalSamples());
+    waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
+}
+
+void EliseApp::update_dialogs() {
+    if (open_project_dialog && open_project_dialog->ready()) {
+        auto filename = open_project_dialog->result();
+        load_project(filename.at(0));
+        open_project_dialog.reset();
+        is_open_project_dialog_active = false;
+    } else if (not open_project_dialog) is_open_project_dialog_active = false;
+
+    if (load_song_dialog && load_song_dialog->ready()) {
+        auto filename = load_song_dialog->result();
+        load_song(filename.at(0));
+        load_song_dialog.reset();
+        is_load_song_dialog_active = false;
+    } else if (not load_song_dialog) is_load_song_dialog_active = false;
+
+    if (save_project_dialog && save_project_dialog->ready()) {
+        auto filename = save_project_dialog->result();
+        filename = ensure_extension(filename, ".elise");
+        save_project(filename);
+        save_project_dialog.reset();
+        is_save_project_dialog_active = false;
+    } else if (not save_project_dialog) is_save_project_dialog_active = false;
+
+    if (export_project_dialog && export_project_dialog->ready()) {
+        auto filename = export_project_dialog->result();
+        filename = ensure_extension(filename, ".py");
+        export_project(filename);
+        export_project_dialog.reset();
+        is_export_project_dialog_active = false;
+    } else if (not export_project_dialog) is_export_project_dialog_active = false;
+
+    is_dialog_opened = is_open_project_dialog_active || is_load_song_dialog_active || is_save_project_dialog_active || is_export_project_dialog_active;
 }
 
