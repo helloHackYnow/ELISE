@@ -190,13 +190,15 @@ void to_json(json &j, const ProjectData &p) {
     j = json{
         {"light_count", p.light_count},
         {"groups", p.groups},
-        {"keyframes", json_keyframes}
+        {"keyframes", json_keyframes},
+        {"max_uuid", p.max_uuid}
     };
 }
 
 void from_json(const json &j, ProjectData &p) {
     j.at("light_count").get_to(p.light_count);
     j.at("groups").get_to(p.groups);
+    j.at("max_uuid").get_to(p.max_uuid);
 
     std::vector<JsonKeyframes> json_keyframes;
     j.at("keyframes").get_to(json_keyframes);

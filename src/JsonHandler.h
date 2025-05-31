@@ -13,6 +13,7 @@ struct ProjectData {
     int sample_rate = 44100;
     std::vector<Group> groups;
     std::vector<Keyframe> keyframes;
+    int64_t max_uuid;
     std::unordered_map<int64_t, std::vector<Command>> keyframe_uuid_to_commands;
 };
 

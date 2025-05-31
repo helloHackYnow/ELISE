@@ -603,6 +603,7 @@ void EliseApp::save_project(const std::string &path) {
     project_data.light_count = light_count;
     project_data.sample_rate = audio_manager.getSampleRate();
     project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
+    project_data.max_uuid = max_keyframe_uuid;
 
     save(path, project_data);
 }
@@ -612,6 +613,8 @@ void EliseApp::load_project(const std::string &path) {
     keyframes = p.keyframes;
     groups = p.groups;
     keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
+    light_count = p.light_count;
+    max_keyframe_uuid = p.max_uuid;
 
     order_keyframes();
     update_keyframes();
