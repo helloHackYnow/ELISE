@@ -119,5 +119,5 @@ std::vector<DetectedNote> detectNotes(const std::vector<float> &samples, int sam
 }
 
 float hann(std::size_t n, std::size_t N) {
-    return 0.5f * (1.0f - std::cos(2.0f * M_PI * n / (N - 1)));
+    return 0.5f * (1.0f - std::cos(2.0f * 3.14159265358979323846 * n / (N - 1)));
 }
