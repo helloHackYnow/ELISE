@@ -672,7 +672,7 @@ void EliseApp::update_dialogs() {
 
     if (save_project_dialog && save_project_dialog->ready()) {
         auto filename = save_project_dialog->result();
-        if(filename.lenght() > 0){
+        if(filename.length() > 0){
             filename = ensure_extension(filename, ".elise");
             save_project(filename);
         }
@@ -682,7 +682,7 @@ void EliseApp::update_dialogs() {
 
     if (export_project_dialog && export_project_dialog->ready()) {
         auto filename = export_project_dialog->result();
-        if(filename.lenght() > 0){
+        if(filename.length() > 0){
             filename = ensure_extension(filename, ".py");
             export_project(filename);
         }
