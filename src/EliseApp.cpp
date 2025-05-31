@@ -69,8 +69,10 @@ bool EliseApp::init() {
     font_config.OversampleH = 3;
     font_config.OversampleV = 1;
     font_config.PixelSnapH = false;
+    font_config.FontDataOwnedByAtlas = false;
 
-    io.Fonts->AddFontFromFileTTF("./ressources/Roboto-Regular.ttf", 18.0f, &font_config);
+    // io.Fonts->AddFontFromFileTTF("./resources/SourceCodePro-Semibold.ttf", 18.0f, &font_config);
+    io.Fonts->AddFontFromMemoryTTF(SourceCodePro_Semibold_ttf, SourceCodePro_Semibold_ttf_len, 18.0f, &font_config);
 
     // Setup Dear ImGui style
     setBessDarkColors();

@@ -26,6 +26,8 @@
 #include "../icons/logo32.h"
 #include "../icons/logo128.h"
 
+#include "../resources/SourceCodePro_Semibold.h"
+
 class EliseApp {
 
 public:
