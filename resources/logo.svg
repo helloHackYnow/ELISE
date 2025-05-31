@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient44">
+      <stop
+         style="stop-color:#1f1f1f;stop-opacity:1;"
+         offset="0"
+         id="stop44" />
+      <stop
+         style="stop-color:#626262;stop-opacity:1;"
+         offset="1"
+         id="stop45" />
+    </linearGradient>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       id="filter42"
+       x="-0.15289512"
+       y="-0.1356475"
+       width="1.3057902"
+       height="1.271295">
+      <feFlood
+         result="flood"
+         in="SourceGraphic"
+         flood-opacity="0.721569"
+         flood-color="rgb(0,0,0)"
+         id="feFlood41" />
+      <feGaussianBlur
+         result="blur"
+         in="SourceGraphic"
+         stdDeviation="19.814241"
+         id="feGaussianBlur41" />
+      <feOffset
+         result="offset"
+         in="blur"
+         dx="0.000000"
+         dy="0.000000"
+         id="feOffset41" />
+      <feComposite
+         result="comp1"
+         operator="in"
+         in="flood"
+         in2="offset"
+         id="feComposite41" />
+      <feComposite
+         result="comp2"
+         operator="over"
+         in="SourceGraphic"
+         in2="comp1"
+         id="feComposite42" />
+    </filter>
+    <linearGradient
+       xlink:href="#linearGradient44"
+       id="linearGradient45"
+       x1="458.56738"
+       y1="437.28143"
+       x2="53.432743"
+       y2="145.23991"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1">
+    <path
+       style="fill:url(#linearGradient45);fill-opacity:1"
+       d="M 42.666666,42.666666 C 85.333333,0 170.66667,0 256.00085,0 341.33504,0 426.66667,0 469.33334,42.66752 512,85.33504 512,170.66667 512,256.00085 c 0,85.33419 0,170.66582 -42.66752,213.33249 C 426.66496,512 341.33333,512 255.99914,512 170.66496,512 85.333333,512 42.666667,469.33248 0,426.66496 0,341.33333 0,255.99914 0,170.66496 0,85.333333 42.666666,42.666666 Z"
+       id="path3" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:534.408px;font-family:FreeSerif;-inkscape-font-specification:'FreeSerif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#f80000;fill-opacity:1;stroke-width:10;stroke-dasharray:none;filter:url(#filter42)"
+       x="87.22451"
+       y="430.65536"
+       id="text3"
+       transform="scale(0.99754135,1.0024647)"><tspan
+         id="tspan3"
+         x="87.22451"
+         y="430.65536"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:534.408px;font-family:FreeSerif;-inkscape-font-specification:'FreeSerif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#f80000;fill-opacity:1;stroke-width:10;stroke-dasharray:none">ℤ</tspan></text>
+  </g>
+</svg>
