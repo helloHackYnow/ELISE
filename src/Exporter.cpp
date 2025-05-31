@@ -86,7 +86,7 @@ std::string generate_python_script(const ProjectData &data) {
             group_desc += "group_" + std::to_string(light) + ", ";
         }
         group_desc += ")";
-        sprintf(buffer, "group_%d = add_group(%s)", i, group_desc.c_str());
+        sprintf(buffer, "group_%d = new_group(%s)", i, group_desc.c_str());
         out += tab + std::string(buffer) + new_line;
     }
 
