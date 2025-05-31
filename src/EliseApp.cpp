@@ -70,9 +70,15 @@ bool EliseApp::init() {
     font_config.OversampleV = 1;
     font_config.PixelSnapH = false;
     font_config.FontDataOwnedByAtlas = false;
+    font_config.MergeMode = false;
 
-    // io.Fonts->AddFontFromFileTTF("./resources/SourceCodePro-Semibold.ttf", 18.0f, &font_config);
     io.Fonts->AddFontFromMemoryTTF(SourceCodePro_Semibold_ttf, SourceCodePro_Semibold_ttf_len, 18.0f, &font_config);
+
+    font_config.MergeMode = true;
+    font_config.PixelSnapH = true;
+    static const ImWchar material_ranges[] = { 0xE000, 0xF8FF, 0 };
+
+    io.Fonts->AddFontFromMemoryTTF(MaterialSymbolsOutlined_48pt_SemiBold_ttf, MaterialSymbolsOutlined_48pt_SemiBold_ttf_len, 18.0f, &font_config, material_ranges);
 
     // Setup Dear ImGui style
     setBessDarkColors();
@@ -224,6 +230,7 @@ void EliseApp::draw_menu_bar() {
             if (ImGui::MenuItem("Exit")) {
                 glfwSetWindowShouldClose(window, true);
             }
+            ImGui::MenuItem("\uE14D");
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();

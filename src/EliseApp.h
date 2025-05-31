@@ -27,6 +27,7 @@
 #include "../icons/logo128.h"
 
 #include "../resources/SourceCodePro_Semibold.h"
+#include "../resources/MaterialSymbols.h"
 
 class EliseApp {
 
