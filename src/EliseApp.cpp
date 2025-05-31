@@ -654,30 +654,38 @@ void EliseApp::load_song(const std::string &path) {
 void EliseApp::update_dialogs() {
     if (open_project_dialog && open_project_dialog->ready()) {
         auto filename = open_project_dialog->result();
-        load_project(filename.at(0));
+        if(filename.size() > 0 ){
+            load_project(filename.at(0));
+        }
         open_project_dialog.reset();
         is_open_project_dialog_active = false;
     } else if (not open_project_dialog) is_open_project_dialog_active = false;
 
     if (load_song_dialog && load_song_dialog->ready()) {
         auto filename = load_song_dialog->result();
-        load_song(filename.at(0));
+        if(filename.size() > 0){
+            load_song(filename.at(0));
+        }
         load_song_dialog.reset();
         is_load_song_dialog_active = false;
     } else if (not load_song_dialog) is_load_song_dialog_active = false;
 
     if (save_project_dialog && save_project_dialog->ready()) {
         auto filename = save_project_dialog->result();
-        filename = ensure_extension(filename, ".elise");
-        save_project(filename);
+        if(filename.lenght() > 0){
+            filename = ensure_extension(filename, ".elise");
+            save_project(filename);
+        }
         save_project_dialog.reset();
         is_save_project_dialog_active = false;
     } else if (not save_project_dialog) is_save_project_dialog_active = false;
 
     if (export_project_dialog && export_project_dialog->ready()) {
         auto filename = export_project_dialog->result();
-        filename = ensure_extension(filename, ".py");
-        export_project(filename);
+        if(filename.lenght() > 0){
+            filename = ensure_extension(filename, ".py");
+            export_project(filename);
+        }
         export_project_dialog.reset();
         is_export_project_dialog_active = false;
     } else if (not export_project_dialog) is_export_project_dialog_active = false;
