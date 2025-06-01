@@ -449,7 +449,6 @@ void EliseApp::draw_command_edition_window() {
 
                     waveform_viewer.set_gradient_preview(keyframe.trigger_sample, gradient.duration);
 
-
                     ImGui::Spacing();
 
                     ImGui::Text("Color gradient");
