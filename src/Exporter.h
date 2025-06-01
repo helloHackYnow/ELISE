@@ -10,9 +10,17 @@
 inline const std::string tab = "    ";
 inline const std::string new_line = "\n";
 
+// TODO : fill placeholders
 inline const char* python_header = R""""(from Sequencer.builder_utils import *
 
+metadata = {
+    "title"      : "placeholder",
+    "music"      : "./Music/le_z.mp3",
+    "priority "  : -1
+}
+
 def build():
+    reset_builder()
 
 )"""";
 
