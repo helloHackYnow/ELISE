@@ -5,6 +5,7 @@
 #include "EliseApp.h"
 
 #include <filesystem>
+#include <algorithm> // Ensure this is included at the top of the file
 
 #include "imgui_internal.h"
 #include "../fonts/icon_font.h"
@@ -383,7 +384,8 @@ void EliseApp::draw_command_edition_window() {
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
         } else {
-            auto & command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
+            auto& command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
+            auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe_uuid]);
 
             ImGui::Text("Command %d", selected_command);
 
@@ -442,7 +444,10 @@ void EliseApp::draw_command_edition_window() {
 
                     int duration_in_ms = (gradient.duration) * 1000 / sample_rate;
                     ImGui::DragInt("Duration ms", &duration_in_ms);
+                    if (duration_in_ms < 0) duration_in_ms = 0;
                     gradient.duration = duration_in_ms * sample_rate / 1000;
+
+                    waveform_viewer.set_gradient_preview(keyframe.trigger_sample, gradient.duration);
 
 
                     ImGui::Spacing();

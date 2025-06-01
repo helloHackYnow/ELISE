@@ -98,7 +98,7 @@ struct GradientInfo {
     GradientKind kind;
 
     int64_t start_sample;
-    int duration; // In sample count
+    unsigned int duration; // In sample count
 };
 
 Color computeGradientColor(const GradientInfo& gradient, int64_t sample);

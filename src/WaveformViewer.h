@@ -62,6 +62,11 @@ private:
     std::atomic_bool computing_envelope = false;
     float envelope_window_ms = 10.0f;
 
+    // Gradient preview
+    int64_t gradient_start; // In sample
+    int64_t gradient_duration; // In sample
+    bool draw_gradient_preview;
+
 
 
 
@@ -75,6 +80,7 @@ private:
     void drawNotes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawCursor(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawKeyframes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
+    void drawGradientPreview(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawSelectedKeyFrameTimestamp(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawTimeScale(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size, float scale_height);
     void drawDebugWindow();
@@ -105,6 +111,8 @@ public:
 
     void set_keyframes(const std::vector<Keyframe>& keyframes);
     void set_selected_keyframe(int64_t keyframe_index);
+
+    void set_gradient_preview(int64_t start, int64_t duration);
 };
 
 

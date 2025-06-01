@@ -226,8 +226,6 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
 
         if (keyframe_x >= -10 && keyframe_x <= canvas_size.x + 10) {
 
-
-
             ImU32 line_color = keyframes[i].is_locked 
                 ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
                 ? IM_COL32(255, 100, 120, 255) : IM_COL32(255, 200, 100, 255);
@@ -251,6 +249,39 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
                              ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
                              IM_COL32(0, 0, 0, 150), rec_rounding, 0, 1.0f);
         }
+    }
+}
+
+void WaveformViewer::drawGradientPreview(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size)
+{
+    if (draw_gradient_preview)
+    {
+        int gradient_preview_height = 30;
+
+        ImVec2 gradient_pos{ 
+            sampleToPixel(static_cast<float>(gradient_start), canvas_size.x) + canvas_pos.x,
+            canvas_pos.y + canvas_size.y - gradient_preview_height };
+
+        ImVec2 gradient_size{ 
+            sampleToPixel(static_cast<float>(gradient_duration), canvas_size.x), 
+            static_cast<float>(gradient_preview_height) };
+
+        draw_list->AddRectFilled(
+            gradient_pos,
+            ImVec2(gradient_pos.x + gradient_size.x, gradient_pos.y + gradient_size.y),
+            ImColor(100, 230, 255, 150),
+            10.f,
+            ImDrawFlags_RoundCornersTopRight
+        );
+
+        draw_list->AddRect(
+            gradient_pos,
+            ImVec2(gradient_pos.x + gradient_size.x, gradient_pos.y + gradient_size.y),
+            ImColor(100*0.8, 230*0.8, 255*0.8, 255),
+            10.f,
+            ImDrawFlags_RoundCornersTopRight,
+            2.0f
+        );
     }
 }
 
@@ -670,6 +701,7 @@ void WaveformViewer::draw() {
     drawKeyframes(draw_list, canvas_pos, canvas_size);
 
     drawSelectedKeyFrameTimestamp(draw_list, canvas_pos, canvas_size);
+    drawGradientPreview(draw_list, canvas_pos, canvas_size);
 
     // Draw time scale
     drawTimeScale(draw_list, canvas_pos, canvas_size, scale_height);
@@ -681,6 +713,8 @@ void WaveformViewer::draw() {
     //                       ImGuiButtonFlags_MouseButtonRight);
 
     if (should_draw_debug) drawDebugWindow();
+
+    draw_gradient_preview = false;
 
     ImGui::End();
 }
@@ -708,5 +742,13 @@ void WaveformViewer::set_keyframes(const std::vector<Keyframe>& keyframes) {
 
 void WaveformViewer::set_selected_keyframe(int64_t keyframe) {
     selected_keyframe_uuid = keyframe;
+}
+
+void WaveformViewer::set_gradient_preview(int64_t start, int64_t duration)
+{
+    gradient_start = start;
+    gradient_duration = duration;
+
+    draw_gradient_preview = true;
 }
 
