@@ -484,7 +484,6 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
         } else {
             dragging_cursor = false;
             dragging_keyframe = false;
-            selected_keyframe_uuid = -1;
         }
 
         // Handle Enter key for adding keyframes
