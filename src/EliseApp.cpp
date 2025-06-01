@@ -247,7 +247,10 @@ void EliseApp::draw_menu_bar() {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open")) on_open_project();
             ImGui::Separator();
-            if (ImGui::MenuItem("Save")) on_save();
+            ImGui::BeginDisabled(!is_loaded_from_file);
+            if (ImGui::MenuItem("Save", "Ctrl-S")) on_save();
+            ImGui::EndDisabled();
+            if (ImGui::MenuItem("Save as")) on_save_as();
             ImGui::Separator();
             if (ImGui::MenuItem("Export")) on_export();
 
@@ -515,6 +518,11 @@ void EliseApp::handle_input() {
             play_audio();
         }
     }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)) {
+        if (is_loaded_from_file) on_save();
+        else on_save_as();
+    }
 }
 
 void EliseApp::update() {
@@ -625,12 +633,16 @@ void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids
 }
 
 void EliseApp::on_save() {
+    if (is_loaded_from_file) save_project(filepath);
+}
+
+void EliseApp::on_save_as() {
     save_project_dialog = std::make_unique<pfd::save_file>(
-        "Save ELISE project",
-        "",
-        std::vector<std::string>{"ELISE project", "*.elise"},
-        pfd::opt::none
-        );
+            "Save ELISE project",
+            "",
+            std::vector<std::string>{"ELISE project", "*.elise"},
+            pfd::opt::none
+            );
     is_save_project_dialog_active = true;
 }
 
@@ -676,6 +688,8 @@ void EliseApp::save_project(const std::string &path) {
     project_data.max_uuid = max_keyframe_uuid;
 
     save(path, project_data);
+    is_loaded_from_file = true;
+    filepath = path;
 }
 
 void EliseApp::load_project(const std::string &path) {
@@ -688,6 +702,8 @@ void EliseApp::load_project(const std::string &path) {
 
     order_keyframes();
     update_keyframes();
+    is_loaded_from_file = true;
+    filepath = path;
 }
 
 void EliseApp::export_project(const std::string &path) {

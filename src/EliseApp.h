@@ -81,6 +81,7 @@ private:
     void new_group(const std::string& name, const std::vector<size_t>& ids);
 
     void on_save();
+    void on_save_as();
     void on_open_project();
     void on_export();
     void on_load_song();
@@ -117,7 +118,7 @@ private:
 
     // Commands
     std::unordered_map<int64_t, std::vector<Command>> keyframe_uuid_to_commands;
-    int selected_command = -1;
+    int selected_command = 0;
     bool is_command_edition_window_visible = false;
 
     // Project manager state
@@ -140,6 +141,9 @@ private:
     std::unique_ptr<pfd::save_file> export_project_dialog;
     bool is_export_project_dialog_active = false;
 
+    // Save / filename
+    bool is_loaded_from_file = false;
+    std::string filepath;
 };
 
 
