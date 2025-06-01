@@ -499,8 +499,6 @@ void EliseApp::draw_command_edition_window() {
                     ImGui::EndDisabled();
                     break;
                 }
-
-
             }
         }
     }
