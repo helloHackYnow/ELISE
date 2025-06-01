@@ -72,8 +72,8 @@ enum class AnimationKind {
 };
 
 inline const char* AnimationKind_str [] {
+    "toggle",
     "gradient",
-    "toggle"
 };
 
 inline AnimationKind AnimationKind_from_int [] {

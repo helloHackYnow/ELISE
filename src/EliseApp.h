@@ -106,6 +106,7 @@ private:
 
     // Player state
     float playback_speed = 1.0f;
+    int sample_rate = 41000;
 
     // Keyframes
     std::vector<Keyframe> keyframes;

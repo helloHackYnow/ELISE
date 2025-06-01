@@ -440,7 +440,10 @@ void EliseApp::draw_command_edition_window() {
                         ImGui::EndCombo();
                     }
 
-                    ImGui::DragInt("Duration (in sample)", &gradient.duration);
+                    int duration_in_ms = (gradient.duration) * 1000 / sample_rate;
+                    ImGui::DragInt("Duration ms", &duration_in_ms);
+                    gradient.duration = duration_in_ms * sample_rate / 1000;
+
 
                     ImGui::Spacing();
 
@@ -706,6 +709,7 @@ void EliseApp::load_song(const std::string &path) {
     audio_manager.loadMP3(path);
     waveform_viewer.set_waveform_data(audio_manager.getOriginalSamples());
     waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
+    sample_rate = audio_manager.getSampleRate();
 }
 
 void EliseApp::update_dialogs() {
