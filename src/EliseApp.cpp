@@ -7,6 +7,7 @@
 #include <filesystem>
 
 #include "imgui_internal.h"
+#include "../fonts/icon_font.h"
 
 
 EliseApp::EliseApp() {
@@ -75,10 +76,9 @@ bool EliseApp::init() {
     io.Fonts->AddFontFromMemoryTTF(SourceCodePro_Semibold_ttf, SourceCodePro_Semibold_ttf_len, 18.0f, &font_config);
 
     font_config.MergeMode = true;
-    font_config.PixelSnapH = true;
-    static const ImWchar material_ranges[] = { 0xE000, 0xF8FF, 0 };
+    static const ImWchar icon_range[] = { 0xf000, 0xf8ff, 0 };
 
-    io.Fonts->AddFontFromMemoryTTF(MaterialSymbolsOutlined_48pt_SemiBold_ttf, MaterialSymbolsOutlined_48pt_SemiBold_ttf_len, 18.0f, &font_config, material_ranges);
+    io.Fonts->AddFontFromMemoryCompressedTTF(icon_font_compressed_data, icon_font_compressed_size, 18.f, &font_config,icon_range);
 
     // Setup Dear ImGui style
     setBessDarkColors();
@@ -305,15 +305,30 @@ void EliseApp::draw_viewport() {
 
 void EliseApp::draw_keyframe_edition_window() {
     if (ImGui::Begin("Keyframe", &is_keyframe_edition_window_visible)) {
+
+		ImGui::Spacing();
         ImGui::Text("Keyframe");
 
         ImGui::Separator();
+       
 
         if (selected_keyframe_uuid >= 0) {
             std::vector<std::string> commands_str;
             std::vector<const char*> listbox_buff;
 
+            auto& keyframe = keyframes.at(keyframe_uuid_to_index.at(selected_keyframe_uuid));
+
             auto& commands = keyframe_uuid_to_commands[selected_keyframe_uuid];
+
+            // Draw a lock / unlock button
+            if (keyframe.is_locked)
+            {
+                if (ImGui::Button((const char*)u8"\uf023")) keyframe.is_locked = false;
+            }
+            else
+            {
+				if (ImGui::Button((const char*)u8"\uf3c1")) keyframe.is_locked = true;
+            }
 
             for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {
                 commands_str.push_back("Command on group " + groups[command.group_id].name);
@@ -571,10 +586,13 @@ void EliseApp::key_frame_deletion_callback(int64_t keyframe_uuid) {
 
 void EliseApp::key_frame_drag_callback(int64_t keyframe_uuid, int64_t new_sample) {
     auto& keyframe = keyframes[keyframe_uuid_to_index[keyframe_uuid]];
-    keyframe.trigger_sample = new_sample;
-    for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {retimeCommand(command, new_sample);}
-    order_keyframes();
-    update_keyframes();
+
+    if (!keyframe.is_locked) {
+        keyframe.trigger_sample = new_sample;
+        for (auto& command : keyframe_uuid_to_commands[selected_keyframe_uuid]) { retimeCommand(command, new_sample); }
+        order_keyframes();
+        update_keyframes();
+    }
 }
 
 void EliseApp::key_frame_selection_callback(int64_t keyframe_uuid) {

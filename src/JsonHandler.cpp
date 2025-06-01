@@ -211,6 +211,7 @@ void from_json(const json &j, ProjectData &p) {
     int64_t uuid = 0;
     for (auto & json_keyframe: json_keyframes) {
         Keyframe keyframe;
+        keyframe.is_locked = true;
         keyframe.trigger_sample = json_keyframe.trigger_sample;
         keyframe.uuid = uuid++;
         p.keyframes.push_back(keyframe);
