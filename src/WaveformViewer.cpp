@@ -218,8 +218,14 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
     for (int i = 0; i < keyframes.size(); ++i) {
         float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
         if (keyframe_x >= -10 && keyframe_x <= canvas_size.x + 10) {
-            ImU32 line_color = (keyframes[i].uuid == selected_keyframe_uuid) ? IM_COL32(255, 100, 100, 255) : IM_COL32(255, 150, 0, 200);
-            ImU32 handle_color = (keyframes[i].uuid == selected_keyframe_uuid) ? IM_COL32(255, 150, 150, 255) : IM_COL32(255, 200, 100, 255);
+
+
+            ImU32 line_color = keyframes[i].is_locked 
+                ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
+                ? IM_COL32(255, 100, 120, 255) : IM_COL32(255, 200, 100, 255);
+
+            ImU32 handle_color = (keyframes[i].uuid == selected_keyframe_uuid) 
+                ? IM_COL32(255, 100, 100, 255) :  IM_COL32(255, 200, 100, 255);
 
             // Draw keyframe line
             draw_list->AddLine(ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + 15),

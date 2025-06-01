@@ -323,11 +323,19 @@ void EliseApp::draw_keyframe_edition_window() {
             // Draw a lock / unlock button
             if (keyframe.is_locked)
             {
-                if (ImGui::Button((const char*)u8"\uf023")) keyframe.is_locked = false;
+                if (ImGui::Button((const char*)u8"\uf023"))
+                {
+                    keyframe.is_locked = false;
+                    update_keyframes();
+                }
             }
             else
             {
-				if (ImGui::Button((const char*)u8"\uf3c1")) keyframe.is_locked = true;
+                if (ImGui::Button((const char*)u8"\uf3c1"))
+                {
+                    keyframe.is_locked = true;
+                    update_keyframes();
+                }
             }
 
             for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {
@@ -603,7 +611,7 @@ void EliseApp::update_keyframes() {
     std::vector<Keyframe> waveform_keyframes;
     waveform_keyframes.reserve(keyframes.size());
 
-    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid});}
+    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid, keyframe.is_locked});}
 
     waveform_viewer.set_keyframes(waveform_keyframes);
 }
