@@ -30,11 +30,14 @@ jobs:
       - name: Package binaries
         run: |
           mkdir dist
-          copy D:\\a\\ELISE\\ELISE\\build\\Release dist
+          copy D:\\a\\ELISE\\ELISE\\build\\Release\\imgui.lib dist\\imgui.lib
+          copy D:\\a\\ELISE\\ELISE\\build\\Release\\ELISE.exe dist\\ELISE.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist
+          files: 
+            dist\\imgui.lib
+            dist\\ELISE.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
