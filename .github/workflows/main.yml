@@ -33,11 +33,13 @@ jobs:
           copy D:\\a\\ELISE\\ELISE\\build\\Release\\imgui.lib dist\\imgui.lib
           copy D:\\a\\ELISE\\ELISE\\build\\Release\\ELISE.exe dist\\ELISE.exe
 
+      - name: Bundle release files into ZIP
+        run: Compress-Archive -Path dist\* -DestinationPath ELISE.zip
+
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist\\imgui.lib
-            dist\\ELISE.exe
+          files: ELISE.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
