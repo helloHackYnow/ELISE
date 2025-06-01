@@ -39,6 +39,8 @@ public:
 
 private:
 
+	void configure_dockspace();
+
     void init_groups();
     void init_light_manager();
     void compile_commands();

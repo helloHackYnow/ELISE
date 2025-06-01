@@ -112,8 +112,7 @@ void EliseApp::mainloop() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Enable docking
-        ImGui::DockSpaceOverViewport();
+		configure_dockspace();
 
         draw();
 
@@ -137,6 +136,37 @@ void EliseApp::cleanup() {
 
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+void EliseApp::configure_dockspace()
+{
+    static bool first_time = true;
+	auto dock_id = ImGui::DockSpaceOverViewport();
+
+    if (first_time)
+    {
+        first_time = false;
+
+        ImGui::DockBuilderRemoveNode(dock_id); // Clear out existing layout
+        ImGui::DockBuilderAddNode(dock_id); // Add empty node
+        ImGui::DockBuilderSetNodeSize(dock_id, ImGui::GetMainViewport()->Size);
+
+        auto dock_id_right = ImGui::DockBuilderSplitNode(dock_id, ImGuiDir_Right, 0.2f, nullptr, &dock_id);
+        auto dock_id_bottom = ImGui::DockBuilderSplitNode(dock_id, ImGuiDir_Down, 0.4f, nullptr, &dock_id);
+		auto dock_id_left = ImGui::DockBuilderSplitNode(dock_id, ImGuiDir_Left, 0.2f, nullptr, &dock_id);
+
+		auto dock_id_right_up = ImGui::DockBuilderSplitNode(dock_id_right, ImGuiDir_Up, 0.5f, nullptr, &dock_id_right);
+
+        
+
+        ImGui::DockBuilderDockWindow("Audio player", dock_id_left);
+        ImGui::DockBuilderDockWindow("Command", dock_id_right);
+		ImGui::DockBuilderDockWindow("Keyframe", dock_id_right_up);
+        ImGui::DockBuilderDockWindow("Waveform Viewer", dock_id_bottom);
+		ImGui::DockBuilderDockWindow("Preview", dock_id);
+        ImGui::DockBuilderFinish(dock_id);
+    }
+
 }
 
 void EliseApp::init_groups() {
