@@ -264,8 +264,9 @@ void EliseApp::draw_player() {
             play_audio();
         }
 
-        ImGui::End();
     }
+
+    ImGui::End();
 }
 
 void EliseApp::draw_viewport() {
@@ -316,8 +317,8 @@ void EliseApp::draw_keyframe_edition_window() {
         }
 
 
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 void EliseApp::draw_command_edition_window() {
@@ -442,9 +443,9 @@ void EliseApp::draw_command_edition_window() {
 
             }
         }
-
-        ImGui::End();
     }
+
+    ImGui::End();
 }
 
 void EliseApp::handle_input() {
