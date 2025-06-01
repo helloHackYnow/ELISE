@@ -67,8 +67,8 @@ inline const char* GradientKind_to_str(const GradientKind& kind) {
 }
 
 enum class AnimationKind {
-    gradient,
     toggle,
+    gradient,
 };
 
 inline const char* AnimationKind_str [] {
@@ -77,8 +77,8 @@ inline const char* AnimationKind_str [] {
 };
 
 inline AnimationKind AnimationKind_from_int [] {
+    AnimationKind::toggle,
     AnimationKind::gradient,
-    AnimationKind::toggle
 };
 
 inline const char* AnimationKind_to_str(const AnimationKind& kind) {
@@ -104,7 +104,7 @@ struct GradientInfo {
 Color computeGradientColor(const GradientInfo& gradient, int64_t sample);
 
 struct ToggleInfo {
-    bool is_on;
+    bool is_on = true;
     Color color;
 };
 
