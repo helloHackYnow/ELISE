@@ -127,9 +127,11 @@ void from_json(const json &j, AnimationDesc &desc) {
     switch (desc.kind) {
         case AnimationKind::gradient:
             j.at("gradient").get_to(desc.gradient);
+            desc.toggle = ToggleInfo{false, Color{0, 0, 0, 255}};
             break;
         case AnimationKind::toggle:
             j.at("toggle").get_to(desc.toggle);
+            desc.gradient = GradientInfo{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, GradientKind::linear, 0};
             break;
     }
 }
