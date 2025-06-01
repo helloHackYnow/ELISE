@@ -88,7 +88,6 @@ bool EliseApp::init() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-
     viewport.init(500, 500);
 
     waveform_viewer.key_frame_creation_callback = [this](float arg){key_frame_creation_callback(arg);};
