@@ -215,9 +215,17 @@ void WaveformViewer::drawCursor(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2
 }
 
 void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2 canvas_size) {
+
+    selected_keyframe_index = -1;
+
     for (int i = 0; i < keyframes.size(); ++i) {
         float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
+
+        // Update selected keyframe index
+        if (keyframes[i].uuid == selected_keyframe_uuid) selected_keyframe_index = i;
+
         if (keyframe_x >= -10 && keyframe_x <= canvas_size.x + 10) {
+
 
 
             ImU32 line_color = keyframes[i].is_locked 
@@ -243,6 +251,32 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
                              ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
                              IM_COL32(0, 0, 0, 150), rec_rounding, 0, 1.0f);
         }
+    }
+}
+
+void WaveformViewer::drawSelectedKeyFrameTimestamp(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size)
+{
+    if (selected_keyframe_uuid >= 0)
+    {
+        // Get the on-screen position
+        float keyframe_x = sampleToPixel(keyframes[selected_keyframe_index].trigger_sample, canvas_size.x);
+
+        float timestamp_x = keyframe_x + 10;
+
+        int timestamp_ms = keyframes[selected_keyframe_index].trigger_sample * 1000 / sample_rate;
+
+        char buff[128];
+        sprintf(buff, "%i ms", timestamp_ms);
+
+        ImVec2 text_size = ImGui::CalcTextSize(buff);
+        ImVec2 text_pos{ timestamp_x + 10, canvas_pos.y + 2 };
+
+        draw_list->AddRectFilled(
+            ImVec2(text_pos.x - 3, text_pos.y),
+            ImVec2(text_pos.x + text_size.x + 3, text_pos.y + text_size.y + 3), 
+            ImColor(25, 25, 25, 220), 3.f);
+
+        draw_list->AddText(text_pos, ImColor(250, 250, 250, 255), buff);
     }
 }
 
@@ -634,6 +668,8 @@ void WaveformViewer::draw() {
 
     // Draw keyframes
     drawKeyframes(draw_list, canvas_pos, canvas_size);
+
+    drawSelectedKeyFrameTimestamp(draw_list, canvas_pos, canvas_size);
 
     // Draw time scale
     drawTimeScale(draw_list, canvas_pos, canvas_size, scale_height);

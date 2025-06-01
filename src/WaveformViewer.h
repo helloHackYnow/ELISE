@@ -32,6 +32,7 @@ private:
 
     std::vector<Keyframe> keyframes;
     int64_t selected_keyframe_uuid = -1;
+    int selected_keyframe_index = -1;
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
 
@@ -74,6 +75,7 @@ private:
     void drawNotes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawCursor(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawKeyframes(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
+    void drawSelectedKeyFrameTimestamp(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size);
     void drawTimeScale(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size, float scale_height);
     void drawDebugWindow();
 
