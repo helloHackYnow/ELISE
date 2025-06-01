@@ -256,29 +256,30 @@ void WaveformViewer::drawGradientPreview(ImDrawList* draw_list, ImVec2 canvas_po
 {
     if (draw_gradient_preview)
     {
-        int gradient_preview_height = 30;
+        float gradient_preview_height = 30.f;
 
-        ImVec2 gradient_pos{ 
+        ImVec2 gradient_pos_1{
             sampleToPixel(static_cast<float>(gradient_start), canvas_size.x) + canvas_pos.x,
             canvas_pos.y + canvas_size.y - gradient_preview_height };
 
-        ImVec2 gradient_size{ 
-            sampleToPixel(static_cast<float>(gradient_duration), canvas_size.x), 
-            static_cast<float>(gradient_preview_height) };
+        ImVec2 gradient_pos_2{
+            sampleToPixel(std::max(static_cast<float>(gradient_start + gradient_duration), 0.0f), canvas_size.x) + canvas_pos.x,
+            canvas_pos.y + canvas_size.y };
 
         draw_list->AddRectFilled(
-            gradient_pos,
-            ImVec2(gradient_pos.x + gradient_size.x, gradient_pos.y + gradient_size.y),
+            gradient_pos_1,
+            gradient_pos_2,
             ImColor(100, 230, 255, 150),
-            10.f,
+            std::min(10.f, std::max(gradient_pos_2.x - gradient_pos_1.x, 0.f)),
+
             ImDrawFlags_RoundCornersTopRight
         );
 
         draw_list->AddRect(
-            gradient_pos,
-            ImVec2(gradient_pos.x + gradient_size.x, gradient_pos.y + gradient_size.y),
+            gradient_pos_1,
+            gradient_pos_2,
             ImColor(100*0.8, 230*0.8, 255*0.8, 255),
-            10.f,
+            std::min(10.f, std::max(gradient_pos_2.x - gradient_pos_1.x, 0.f)),
             ImDrawFlags_RoundCornersTopRight,
             2.0f
         );
