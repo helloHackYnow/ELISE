@@ -36,6 +36,10 @@ void from_json(const json& j, ToggleInfo& info);
 void to_json(json& j, const GradientInfo& info);
 void from_json(const json& j, GradientInfo& info);
 
+void to_json(json &j, const BlinkInfo &info);
+void from_json(const json &j, BlinkInfo &info);
+
+
 void to_json(json& j, const AnimationKind& kind);
 void from_json(const json& j, AnimationKind& kind);
 

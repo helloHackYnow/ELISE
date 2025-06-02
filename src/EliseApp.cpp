@@ -455,25 +455,10 @@ void EliseApp::draw_command_edition_window() {
 
                     ImGui::Text("Color gradient");
                     ImGui::Separator();
-                    // Start color
-                    float col[4] = {
-                        gradient.start_color.r / 255.0f,
-                        gradient.start_color.g / 255.0f,
-                        gradient.start_color.b / 255.0f,
-                        gradient.start_color.a / 255.0f
-                    };
-                    ImGui::ColorEdit4("Start color", col);
-                    gradient.start_color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
 
-                    // End color
-                    col[0] = gradient.end_color.r / 255.0f;
-                    col[1] = gradient.end_color.g / 255.0f;
-                    col[2] = gradient.end_color.b / 255.0f;
-                    col[3] = gradient.end_color.a / 255.0f;
-                    ImGui::ColorEdit4("End  color", col);
-                    gradient.end_color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+                    color_picker("Start color", gradient.start_color);
 
-
+                    color_picker("End color", gradient.end_color);
                     break;
                 }
 
@@ -489,16 +474,23 @@ void EliseApp::draw_command_edition_window() {
                     ImGui::Text("Color");
                     ImGui::Separator();
 
-                    float col[4] = {
-                        toggle.color.r / 255.0f,
-                        toggle.color.g / 255.0f,
-                        toggle.color.b / 255.0f,
-                        toggle.color.a / 255.0f
-                    };
-                    ImGui::ColorEdit4("Color", col);
-                    toggle.color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+                    color_picker("Color", toggle.color);
 
                     ImGui::EndDisabled();
+                    break;
+                }
+
+                case AnimationKind::blink : {
+                    auto & blink = command.animation.blink;
+
+                    int period_in_ms = (blink.period) * 1000 / sample_rate;
+                    ImGui::DragInt("Period ms", &period_in_ms);
+                    if (period_in_ms < 0) period_in_ms = 0;
+                    blink.period = period_in_ms * sample_rate / 1000;
+
+                    color_picker("On color", blink.on_color);
+
+                    color_picker("Off color", blink.off_color);
                     break;
                 }
             }
@@ -769,5 +761,52 @@ void EliseApp::update_dialogs() {
     } else if (not export_project_dialog) is_export_project_dialog_active = false;
 
     is_dialog_opened = is_open_project_dialog_active || is_load_song_dialog_active || is_save_project_dialog_active || is_export_project_dialog_active;
+}
+
+void EliseApp::copy_color(const Color &color) {
+    has_copied_color = true;
+    copied_color = color;
+}
+
+void EliseApp::copy_command(const Command &command) {
+    has_copied_command = true;
+    copied_command = command;
+}
+
+void EliseApp::copy_commands(const std::vector<Command> &commands) {
+    has_copied_commands = true;
+    copied_commands = commands;
+}
+
+void EliseApp::color_picker(const char *label, Color &color) {
+
+    float col[] = {
+        color.r / 255.0f,
+        color.g / 255.0f,
+        color.b / 255.0f,
+        color.a / 255.0f
+    };
+
+    ImGui::PushID(label);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    if (ImGui::Button((const char *)u8"\uf24d")) copy_color(color); // Copy button
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!has_copied_color);
+    if (has_copied_color) ImGui::PushStyleColor(ImGuiCol_Text, get_vec(copied_color));
+    if (ImGui::Button((const char *)u8"\uf0ea")) color = copied_color;
+    if (has_copied_color) ImGui::PopStyleColor(1);
+    ImGui::EndDisabled();
+    ImGui::PopStyleColor();
+
+    ImGui::SameLine();
+    // End color
+    col[0] = color.r / 255.0f;
+    col[1] = color.g / 255.0f;
+    col[2] = color.b / 255.0f;
+    col[3] = color.a / 255.0f;
+    ImGui::ColorEdit4(label, col, ImGuiColorEditFlags_NoInputs);
+    color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
+
+    ImGui::PopID();
 }
 

@@ -82,6 +82,20 @@ void from_json(const json &j, GradientInfo &info) {
     j.at("duration").get_to(info.duration);
 }
 
+void to_json(json &j, const BlinkInfo &info) {
+    j = json{
+        {"on_color", info.on_color},
+        {"off_color", info.off_color},
+        {"period", info.period}
+    };
+}
+
+void from_json(const json &j, BlinkInfo &info) {
+    j.at("on_color").get_to(info.on_color);
+    j.at("off_color").get_to(info.off_color);
+    j.at("period").get_to(info.period);
+}
+
 void to_json(json &j, const AnimationKind &kind) {
     switch (kind) {
         case AnimationKind::gradient:
@@ -90,7 +104,11 @@ void to_json(json &j, const AnimationKind &kind) {
         case AnimationKind::toggle:
             j = "toggle";
             break;
-        default: j = "gradient";
+        case AnimationKind::blink:
+            j = "blink";
+            break;
+
+        default: j = "toggle";
     }
 }
 
@@ -100,6 +118,8 @@ void from_json(const json &j, AnimationKind &kind) {
         kind = AnimationKind::gradient;
     } else if (value == "toggle") {
         kind = AnimationKind::toggle;
+    } else if (value == "blink") {
+        kind = AnimationKind::blink;
     } else {
         throw std::runtime_error("Invalid animation kind: " + value);
     }
@@ -119,6 +139,11 @@ void to_json(json &j, const AnimationDesc &desc) {
                 {"toggle", desc.toggle}
             };
             break;
+        case AnimationKind::blink:
+            j = json{
+                {"kind", "blink"},
+                {"blink", desc.blink}
+            };
     }
 }
 
@@ -127,10 +152,20 @@ void from_json(const json &j, AnimationDesc &desc) {
     switch (desc.kind) {
         case AnimationKind::gradient:
             j.at("gradient").get_to(desc.gradient);
+
             desc.toggle = ToggleInfo{false, Color{0, 0, 0, 255}};
+            desc.blink = BlinkInfo{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, 0};
             break;
         case AnimationKind::toggle:
             j.at("toggle").get_to(desc.toggle);
+
+            desc.gradient = GradientInfo{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, GradientKind::linear, 0};
+            desc.blink = BlinkInfo{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, 0};
+            break;
+        case AnimationKind::blink:
+            j.at("blink").get_to(desc.blink);
+
+            desc.toggle = ToggleInfo{false, Color{0, 0, 0, 255}};
             desc.gradient = GradientInfo{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, GradientKind::linear, 0};
             break;
     }

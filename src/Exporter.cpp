@@ -61,6 +61,18 @@ std::string get_python_command(const Command &command, int sample_rate) {
             }
 
             return cmd;
+
+        }
+
+        case AnimationKind::blink: {
+            std::string cmd = "blink(";
+            cmd += std::to_string(sample_to_ms(command.trigger_sample, sample_rate)) + ", ";
+            cmd += get_group_str(command.group_id) + ", ";
+            cmd += get_python_color(command.animation.blink.on_color) + ", ";
+            cmd += get_python_color(command.animation.blink.off_color) + ", ";
+            cmd += std::to_string(sample_to_ms(command.animation.blink.period, sample_rate)) + ")";
+
+            return cmd;
         }
     }
 }

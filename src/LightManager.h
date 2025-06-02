@@ -6,6 +6,8 @@
 #define LIGHTMANAGER_H
 #include <string>
 #include <vector>
+
+#include "imgui.h"
 #include "InterpolationUtils.h"
 
 struct Group {
@@ -19,6 +21,8 @@ struct Color {
     int b = 0;
     int a = 255;
 };
+
+ImVec4 get_vec(const Color& col);
 
 Color interpolate_linear(Color a, Color b, float t);
 
@@ -69,16 +73,19 @@ inline const char* GradientKind_to_str(const GradientKind& kind) {
 enum class AnimationKind {
     toggle,
     gradient,
+    blink,
 };
 
 inline const char* AnimationKind_str [] {
     "toggle",
     "gradient",
+    "blink",
 };
 
 inline AnimationKind AnimationKind_from_int [] {
     AnimationKind::toggle,
     AnimationKind::gradient,
+    AnimationKind::blink,
 };
 
 inline const char* AnimationKind_to_str(const AnimationKind& kind) {
@@ -87,6 +94,8 @@ inline const char* AnimationKind_to_str(const AnimationKind& kind) {
              return "gradient";
         case AnimationKind::toggle :
             return "toggle";
+        case AnimationKind::blink :
+            return "blink";
     }
     return "";
 }
@@ -110,11 +119,21 @@ struct ToggleInfo {
 
 Color computeToggleColor(const ToggleInfo& toggle, int64_t sample);
 
+struct BlinkInfo {
+    Color on_color;
+    Color off_color;
+    int64_t start_sample;
+    int64_t period; // In sample count
+};
+
+Color computeBlinkColor(const BlinkInfo& blink, int64_t sample);
+
 struct AnimationDesc {
     AnimationKind kind;
 
     GradientInfo gradient;
     ToggleInfo toggle;
+    BlinkInfo blink;
 
 };
 

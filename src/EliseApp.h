@@ -93,6 +93,12 @@ private:
 
     void update_dialogs();
 
+    void copy_color(const Color& color);
+    void copy_command(const Command& command);
+    void copy_commands(const std::vector<Command>& commands);
+
+    // ImGui components
+    void color_picker(const char* label, Color& color);
 
 private:
     GLFWwindow* window;
@@ -144,6 +150,19 @@ private:
     // Save / filename
     bool is_loaded_from_file = false;
     std::string filepath;
+
+    // Copy / Paste system
+    //--------------------
+    Command copied_command;
+    bool has_copied_command = false;
+
+    std::vector<Command> copied_commands;
+    bool has_copied_commands = false;
+
+    Color copied_color;
+    bool has_copied_color = false;
+
+
 };
 
 

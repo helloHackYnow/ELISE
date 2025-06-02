@@ -7,6 +7,10 @@
 #include <algorithm>
 #include <chrono>
 
+ImVec4 get_vec(const Color &col) {
+    return ImVec4(col.r / 255.f, col.g / 255.f, col.b / 255.f, col.a / 255.f);
+}
+
 Color interpolate_linear(Color a, Color b, float t) {
     return {
         int(m_lerp(a.r, b.r, t)),
@@ -37,12 +41,22 @@ Color computeToggleColor(const ToggleInfo &toggle, int64_t sample) {
     return toggle.is_on ? toggle.color : Color{0, 0, 0, 255};
 }
 
+Color computeBlinkColor(const BlinkInfo &blink, int64_t sample) {
+    auto elapsed = std::max(0l, sample - blink.start_sample) % blink.period;
+    return elapsed < blink.period / 2 ? blink.on_color : blink.off_color;
+
+}
+
 void retimeCommand(Command &command, int64_t new_sample) {
     command.trigger_sample = new_sample;
 
     switch (command.animation.kind) {
         case AnimationKind::gradient :
             command.animation.gradient.start_sample = new_sample;
+            break;
+
+        case AnimationKind::blink :
+            command.animation.blink.start_sample = new_sample;
             break;
 
         default :
@@ -58,6 +72,10 @@ Color computeAnimationColor(const AnimationDesc &animation, int64_t sample) {
 
         case AnimationKind::gradient : {
             return computeGradientColor(animation.gradient, sample);
+        }
+
+        case AnimationKind::blink : {
+            return computeBlinkColor(animation.blink, sample);
         }
         default:
             return Color{0, 0, 0, 0};
