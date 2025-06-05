@@ -363,9 +363,6 @@ void EliseApp::draw_keyframe_edition_window() {
 
             ImGui::EndDisabled();
 
-
-
-
         } else {
             ImGui::BeginDisabled();
             ImGui::Text("No keyframe selected");
@@ -390,6 +387,19 @@ void EliseApp::draw_command_edition_window() {
             auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe_uuid]);
 
             ImGui::Text("Command %d", selected_command);
+
+            ImGui::SameLine();
+            float copy_btn_width = ImGui::CalcTextSize((const char *)u8"\uf24d").x + ImGui::GetStyle().FramePadding.x * 2.f;
+            float paste_btn_width = ImGui::CalcTextSize((const char *)u8"\uf0ea").x + ImGui::GetStyle().FramePadding.x * 2.f;
+            float widthNeeded = copy_btn_width + ImGui::GetStyle().ItemSpacing.x + paste_btn_width;
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - widthNeeded);
+
+            if (ImGui::Button((const char*)u8"\uf24d")) copy_command(command);
+            ImGui::SameLine();
+
+            ImGui::BeginDisabled(!has_copied_command);
+            if (ImGui::Button((const char*)u8"\uf0ea")) command = copied_command;
+            ImGui::EndDisabled();
 
             ImGui::Spacing();
             ImGui::Separator();
@@ -423,6 +433,7 @@ void EliseApp::draw_command_edition_window() {
 
             ImGui::Spacing();
             ImGui::Text("Animation");
+
             ImGui::Separator();
 
             switch (command.animation.kind) {
