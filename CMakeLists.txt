@@ -53,6 +53,10 @@ add_executable(${PROJECT_NAME} src/main.cpp
         libs/portable_file_dialog.h
         src/file_utils.h
         libs/stb_image.h
+        src/2D\ renderer/Texture.cpp
+        src/2D\ renderer/Framebuffer.cpp
+        "src/2D renderer/Renderer.cpp"
+        "src/2D renderer/Renderer.h"
 )
 
 find_package(OpenGL REQUIRED)
