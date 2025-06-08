@@ -42,7 +42,7 @@ Color computeToggleColor(const ToggleInfo &toggle, int64_t sample) {
 }
 
 Color computeBlinkColor(const BlinkInfo &blink, int64_t sample) {
-    auto elapsed = std::max(0l, sample - blink.start_sample) % blink.period;
+    auto elapsed = std::max(0ll, sample - blink.start_sample) % blink.period;
     return elapsed < blink.period / 2 ? blink.on_color : blink.off_color;
 
 }
