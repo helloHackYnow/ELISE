@@ -72,6 +72,7 @@ bool EliseApp::init() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     // Setup ImGui style
     ImFontConfig font_config;
@@ -131,6 +132,15 @@ void EliseApp::mainloop() {
         glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Update and Render additional Platform Windows
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
 
         glfwSwapBuffers(window);
     }
@@ -245,6 +255,24 @@ void EliseApp::draw() {
     draw_command_edition_window();
     waveform_viewer.draw();
     viewport.draw();
+
+    // Notifications style setup
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f); // Disable round borders
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f); // Disable borders
+
+    // Notifications color setup
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 1.00f)); // Background color
+
+
+    // Main rendering function
+    ImGui::RenderNotifications();
+
+
+    //——————————————————————————————— WARNING ———————————————————————————————
+    // Argument MUST match the amount of ImGui::PushStyleVar() calls
+    ImGui::PopStyleVar(2);
+    // Argument MUST match the amount of ImGui::PushStyleColor() calls
+    ImGui::PopStyleColor(1);
 
     ImGui::EndDisabled();
 }
@@ -700,6 +728,8 @@ void EliseApp::save_project(const std::string &path) {
     save(path, project_data);
     is_loaded_from_file = true;
     filepath = path;
+
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project was saved !"});
 }
 
 void EliseApp::load_project(const std::string &path) {

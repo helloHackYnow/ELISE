@@ -28,6 +28,7 @@
 
 #include "../resources/SourceCodePro_Semibold.h"
 #include "../resources/MaterialSymbols.h"
+#include "../libs/ImGuiNotify.hpp"
 
 class EliseApp {
 
