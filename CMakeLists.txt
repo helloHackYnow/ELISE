@@ -13,18 +13,18 @@ add_subdirectory(glfw)   # Builds libglfw and exports target glfw
 
 # Add ImGui submodule (core + GLFW backend)
 add_library(imgui
-imgui/imgui.cpp
-imgui/imgui_draw.cpp
-imgui/imgui_widgets.cpp
-imgui/imgui_tables.cpp
-imgui/imgui_demo.cpp
-imgui/backends/imgui_impl_glfw.cpp
-imgui/backends/imgui_impl_opengl3.cpp
+        imgui/imgui.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_widgets.cpp
+        imgui/imgui_tables.cpp
+        imgui/imgui_demo.cpp
+        imgui/backends/imgui_impl_glfw.cpp
+        imgui/backends/imgui_impl_opengl3.cpp
 )
 
 target_include_directories(imgui PUBLIC
-imgui
-imgui/backends
+        imgui
+        imgui/backends
 )
 
 target_link_libraries(imgui PUBLIC glfw)
@@ -73,12 +73,18 @@ function(setup_ffmpeg_static)
                 message(FATAL_ERROR "Failed to extract FFmpeg archive")
             endif()
 
-            # Find and rename the extracted directory
+            # Find the extracted directory and rename it to ffmpeg
             file(GLOB EXTRACTED_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-*")
             if(EXTRACTED_DIRS)
                 list(GET EXTRACTED_DIRS 0 EXTRACTED_DIR)
+                message(STATUS "Found extracted directory: ${EXTRACTED_DIR}")
                 file(RENAME "${EXTRACTED_DIR}" "${FFMPEG_DIR}")
+            else()
+                message(FATAL_ERROR "Could not find extracted FFmpeg directory")
             endif()
+
+            # Clean up archive
+            file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${FFMPEG_ARCHIVE}")
 
         else()
             # Linux/macOS: Direct binary download (for executables)
@@ -145,19 +151,58 @@ function(setup_ffmpeg_static)
 
             return()
         endif()
-
-        # Clean up archive
-        if(WIN32)
-            file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${FFMPEG_ARCHIVE}")
-        endif()
     endif()
 
     # Windows static library setup
     if(WIN32)
-        # Verify FFmpeg directory structure
-        if(NOT EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
-            message(FATAL_ERROR "FFmpeg headers not found in ${FFMPEG_DIR}/include")
+        # Debug: List contents of the ffmpeg directory
+        message(STATUS "Contents of ${FFMPEG_DIR}:")
+        file(GLOB_RECURSE FFMPEG_CONTENTS "${FFMPEG_DIR}/*")
+        foreach(item ${FFMPEG_CONTENTS})
+            message(STATUS "  ${item}")
+        endforeach()
+
+        # Look for headers in common locations
+        set(POSSIBLE_INCLUDE_DIRS
+                "${FFMPEG_DIR}/include"
+                "${FFMPEG_DIR}/include/ffmpeg"
+                "${FFMPEG_DIR}/dev/include"
+        )
+
+        set(FFMPEG_INCLUDE_DIR "")
+        foreach(dir ${POSSIBLE_INCLUDE_DIRS})
+            if(EXISTS "${dir}/libavcodec/avcodec.h")
+                set(FFMPEG_INCLUDE_DIR "${dir}")
+                break()
+            endif()
+        endforeach()
+
+        if(NOT FFMPEG_INCLUDE_DIR)
+            message(FATAL_ERROR "FFmpeg headers not found. Searched in: ${POSSIBLE_INCLUDE_DIRS}")
         endif()
+
+        message(STATUS "Found FFmpeg headers in: ${FFMPEG_INCLUDE_DIR}")
+
+        # Look for libraries in common locations
+        set(POSSIBLE_LIB_DIRS
+                "${FFMPEG_DIR}/lib"
+                "${FFMPEG_DIR}/lib/x64"
+                "${FFMPEG_DIR}/dev/lib"
+        )
+
+        set(FFMPEG_LIB_DIR "")
+        foreach(dir ${POSSIBLE_LIB_DIRS})
+            if(EXISTS "${dir}/avcodec.lib")
+                set(FFMPEG_LIB_DIR "${dir}")
+                break()
+            endif()
+        endforeach()
+
+        if(NOT FFMPEG_LIB_DIR)
+            message(FATAL_ERROR "FFmpeg libraries not found. Searched in: ${POSSIBLE_LIB_DIRS}")
+        endif()
+
+        message(STATUS "Found FFmpeg libraries in: ${FFMPEG_LIB_DIR}")
 
         # Set up static imported targets for Windows
         set(FFMPEG_LIBS avcodec avformat avutil swscale)
@@ -166,13 +211,13 @@ function(setup_ffmpeg_static)
             add_library(ffmpeg::${lib} STATIC IMPORTED)
 
             set_target_properties(ffmpeg::${lib} PROPERTIES
-                    IMPORTED_LOCATION "${FFMPEG_DIR}/lib/${lib}.lib"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_DIR}/include"
+                    IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${lib}.lib"
+                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIR}"
             )
 
             # Verify static library exists
-            if(NOT EXISTS "${FFMPEG_DIR}/lib/${lib}.lib")
-                message(FATAL_ERROR "FFmpeg static library not found: ${FFMPEG_DIR}/lib/${lib}.lib")
+            if(NOT EXISTS "${FFMPEG_LIB_DIR}/${lib}.lib")
+                message(FATAL_ERROR "FFmpeg static library not found: ${FFMPEG_LIB_DIR}/${lib}.lib")
             endif()
         endforeach()
 
@@ -268,10 +313,7 @@ target_link_libraries(${PROJECT_NAME}
         glfw
         ${CMAKE_DL_LIBS}
         OpenGL::GL
-        avcodec
-        avformat
-        swscale
-        avutil
+        ffmpeg
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
