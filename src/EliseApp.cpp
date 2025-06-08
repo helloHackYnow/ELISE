@@ -236,7 +236,7 @@ void EliseApp::compile_commands() {
 
             retimeCommand(command, keyframe.trigger_sample);
 
-            commands.push_back(command);
+            if (keyframe.is_enabled) commands.push_back(command);
         }
     }
 
@@ -375,6 +375,9 @@ void EliseApp::draw_keyframe_edition_window() {
                     update_keyframes();
                 }
             }
+
+            ImGui::SameLine();
+            if (ImGui::Checkbox("Enabled", &keyframe.is_enabled)) update_keyframes();
 
             for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {
                 commands_str.push_back("Command on group " + groups[command.group_id].name);
@@ -659,7 +662,7 @@ void EliseApp::update_keyframes() {
     std::vector<Keyframe> waveform_keyframes;
     waveform_keyframes.reserve(keyframes.size());
 
-    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid, keyframe.is_locked});}
+    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid, keyframe.is_locked, keyframe.is_enabled});}
 
     waveform_viewer.set_keyframes(waveform_keyframes);
 }

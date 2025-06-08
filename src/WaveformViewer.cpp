@@ -230,7 +230,8 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
                 ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
                 ? IM_COL32(255, 100, 120, 255) : IM_COL32(255, 200, 100, 255);
 
-            ImU32 handle_color = (keyframes[i].uuid == selected_keyframe_uuid) 
+            ImU32 handle_color = !(keyframes[i].is_enabled)
+                ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
                 ? IM_COL32(255, 100, 100, 255) :  IM_COL32(255, 200, 100, 255);
 
             // Draw keyframe line

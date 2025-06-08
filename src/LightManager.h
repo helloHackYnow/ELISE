@@ -147,6 +147,7 @@ struct Keyframe {
     int64_t trigger_sample;
     int64_t uuid = -1;
     bool is_locked = false;
+    bool is_enabled = true;
 };
 
 inline bool compare(const Keyframe& a, const Keyframe& b) {

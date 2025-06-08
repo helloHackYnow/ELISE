@@ -247,6 +247,7 @@ void from_json(const json &j, ProjectData &p) {
     for (auto & json_keyframe: json_keyframes) {
         Keyframe keyframe;
         keyframe.is_locked = true;
+        keyframe.is_enabled = true;
         keyframe.trigger_sample = json_keyframe.trigger_sample;
         keyframe.uuid = uuid++;
         p.keyframes.push_back(keyframe);
