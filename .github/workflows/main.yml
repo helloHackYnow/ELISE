@@ -30,11 +30,10 @@ jobs:
       - name: Debug Build Directory
         run: dir build\Release
 
-
       - name: Package binaries
         run: |
           mkdir dist
-          copy D:\\a\\ELISE\\ELISE\\build\\Release\\ELISE.exe dist\\ELISE.exe
+          copy build\ReleaseELISE.exe dist\ELISE.exe
 
       - name: Bundle release files into ZIP
         run: Compress-Archive -Path dist\* -DestinationPath ELISE.zip
