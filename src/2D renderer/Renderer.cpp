@@ -51,7 +51,7 @@ namespace Odin {
             else if (i < 7) pos = { -0.2f + x_spacing * (i - 5), y_mid };
             else pos = { -0.5f + x_spacing * (i - 7), y_bot };
 
-            light_shader.setVec4("uColor", windows_colors.at(i) * 2.f);
+            light_shader.setVec4("uColor", windows_colors.at(i) * 2.5f);
             light_shader.setVec2("uPosition", glm::vec2(pos[0], pos[1]));
             light_shader.setFloat("uScale", scale);
 

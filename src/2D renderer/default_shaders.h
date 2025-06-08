@@ -6,7 +6,7 @@
 #define DEFAULT_SHADERS_H
 
 inline const char* light_vert = R""""(
-#version 450 core
+#version 330 core
 layout (location = 0) in vec2 aPos;
 
 uniform vec2 uPosition;
@@ -19,7 +19,7 @@ void main() {
 )"""";
 
 inline const char* light_frag = R""""(
-#version 450 core
+#version 330 core
 out vec4 FragColor;
 
 uniform vec4 uColor;

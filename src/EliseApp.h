@@ -30,6 +30,8 @@
 #include "../resources/MaterialSymbols.h"
 #include "../libs/ImGuiNotify.hpp"
 
+#include "VideoEncoder.h"
+
 class EliseApp {
 
 public:
@@ -101,6 +103,8 @@ private:
     // ImGui components
     void color_picker(const char* label, Color& color);
 
+    void export_video(const std::string& path);
+
 private:
     GLFWwindow* window;
     WaveformViewer waveform_viewer;
@@ -115,6 +119,7 @@ private:
     // Player state
     float playback_speed = 1.0f;
     int sample_rate = 41000;
+    int sample_count = 0;
 
     // Keyframes
     std::vector<Keyframe> keyframes;
@@ -163,7 +168,11 @@ private:
     Color copied_color;
     bool has_copied_color = false;
 
-
+    // Video exporting system
+    //-----------------------
+    VideoEncoder video_encoder;
+    bool is_exporting = false;
+    size_t export_framerate = 60;
 };
 
 

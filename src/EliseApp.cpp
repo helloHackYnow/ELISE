@@ -24,10 +24,10 @@ bool EliseApp::init() {
         return false;
     }
 
-    // GL 4.5 + GLSL 450
-    const char* glsl_version = "#version 450";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    // GL 3.3 + GLSL 330
+    const char* glsl_version = "#version 330";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
@@ -765,9 +765,11 @@ void EliseApp::export_project(const std::string &path) {
 
 void EliseApp::load_song(const std::string &path) {
     audio_manager.loadMP3(path);
-    waveform_viewer.set_waveform_data(audio_manager.getOriginalSamples());
+    auto& data = audio_manager.getOriginalSamples();
+    waveform_viewer.set_waveform_data(data);
     waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
     sample_rate = audio_manager.getSampleRate();
+    sample_count = data.size();
 }
 
 void EliseApp::update_dialogs() {
@@ -857,5 +859,27 @@ void EliseApp::color_picker(const char *label, Color &color) {
     color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
 
     ImGui::PopID();
+}
+
+void EliseApp::export_video(const std::string &path) {
+    is_exporting = true;
+
+    compile_commands();
+
+    int frame = 0;
+    int sample = 0;
+    int max_samples = sample_count;
+
+    while (sample < max_samples) {
+        light_manager.updateAnimations(sample);
+        light_manager.updateLightStates(sample);
+        auto lights = light_manager.getLightStates();
+
+        frame++;
+    }
+
+
+
+    is_exporting = false;
 }
 
