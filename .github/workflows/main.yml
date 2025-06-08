@@ -33,7 +33,7 @@ jobs:
       - name: Package binaries
         run: |
           mkdir dist
-          copy build\ReleaseELISE.exe dist\ELISE.exe
+          copy build\Release\ELISE.exe dist\ELISE.exe
 
       - name: Bundle release files into ZIP
         run: Compress-Archive -Path dist\* -DestinationPath ELISE.zip
