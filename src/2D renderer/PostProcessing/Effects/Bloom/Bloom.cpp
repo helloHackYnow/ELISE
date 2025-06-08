@@ -64,8 +64,6 @@ namespace Odin
 	   glBindTexture(GL_TEXTURE_2D, fbos.at(0)->GetTexture());
 	   Draw(*fbos.at(1));
 
-	   glBindTexture(GL_TEXTURE_2D, 0);
-
 	   // Third pass (vertical blur)
 	   shaders.at(1).setVec2("blur_dir", 0, 1);
 	   glBindTexture(GL_TEXTURE_2D, fbos.at(1)->GetTexture());

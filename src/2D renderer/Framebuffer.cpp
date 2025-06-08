@@ -6,119 +6,126 @@
 
 namespace Odin {
 
-	FrameBuffer::FrameBuffer()
-	{
+    FrameBuffer::FrameBuffer() : fboID(0), rboID(0), samples(0)
+    {
 
-	}
+    }
 
-	FrameBuffer::~FrameBuffer()
-	{
+    FrameBuffer::~FrameBuffer()
+    {
+        if (fboID != 0) {
+            glDeleteFramebuffers(1, &fboID);
+        }
+        if (rboID != 0) {
+            glDeleteRenderbuffers(1, &rboID);
+        }
+    }
+    
+    void FrameBuffer::Init(int _width, int _height, bool isHDR, int samples)
+    {
+        dimensions = glm::vec2(_width, _height);
 
-		glDeleteFramebuffers(1, &fboID);
-		glDeleteRenderbuffers(1, &rboID);
-	}
-	
-	void FrameBuffer::Init(int _width, int _height, bool isHDR, int samples)
-	{
-		dimensions = glm::vec2(_width, _height);
+        GLuint internalFormat = GL_RGBA8;
+        GLenum format = GL_RGBA;
 
-		GLuint internalFormat = GL_RGBA8;
-		GLenum format = GL_RGBA;
+        if (isHDR) {
+            internalFormat = GL_R11F_G11F_B10F;
+            format = GL_RGB;
+        }
 
-		if (isHDR) {
-			internalFormat = GL_R11F_G11F_B10F;
-			format = GL_RGB;
+        glGenFramebuffers(1, &fboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
-		}
+        texture.Init(internalFormat, format, _width, _height, samples);
 
-		glGenFramebuffers(1, &fboID);
-		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+        // Only set parameters if not multisampled
+        if (samples <= 1) {
+            glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+            texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        }
 
-		texture.Init(internalFormat, format, _width, _height, samples);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.GetTarget(), texture.ID(), 0);
 
-		texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glGenRenderbuffers(1, &rboID);
+        glBindRenderbuffer(GL_RENDERBUFFER, rboID);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture.GetTarget(), texture.ID(), 0);
+        if (samples > 1) // Check if msaa
+        {
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _width, _height);
+        }
+        else
+        {
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height);
+        }
 
-		glGenRenderbuffers(1, &rboID);
-		glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboID);
 
-		if (samples > 1) // Check if msaa
-		{
-			glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _width, _height);
-		}
-		else
-		{
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height);
-		}
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
 
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboID);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
+        this->samples = samples;
+    }
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    void FrameBuffer::Rescale(int _width, int _height)
+    {
+        if (_width == dimensions.x && _height == dimensions.y) return;
 
-		this->samples = samples;
-	}
+        dimensions = glm::vec2(_width, _height);
 
-	void FrameBuffer::Rescale(int _width, int _height)
-	{
-		if (_width == dimensions.x && _height == dimensions.y) return;
+        texture.Resize(_width, _height);
 
-		dimensions = glm::vec2(_width, _height);
+        // Only set parameters if not multisampled
+        if (samples <= 1) {
+            texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        }
 
-		texture.Resize(_width, _height);
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+        
+        if (samples > 1)
+        {
+            glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _width, _height);
+        }
+        else
+        {
+            glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height);
+        }
 
-		texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		texture.SetParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		texture.SetParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
 
-		if (samples > 1)
-		{
-			glBindRenderbuffer(GL_RENDERBUFFER, rboID);
-			glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, _width, _height);
-		}
-		else
-		{
-			glBindRenderbuffer(GL_RENDERBUFFER, rboID);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _width, _height);
-		}
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n";
+    void FrameBuffer::Use()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+    }
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	}
+    unsigned int FrameBuffer::GetTexture()
+    {
+        return texture.ID();
+    }
 
-	void FrameBuffer::Use()
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
-	}
+    unsigned int FrameBuffer::ID()
+    {
+        return fboID;
+    }
 
-	unsigned int FrameBuffer::GetTexture()
-	{
-		return texture.ID();
-	}
-
-	unsigned int FrameBuffer::ID()
-	{
-		return fboID;
-	}
-
-	bool FrameBuffer::IsMultiSamples()
-	{
-		return samples > 1;
-	}
+    bool FrameBuffer::IsMultiSamples()
+    {
+        return samples > 1;
+    }
 
 }

@@ -13,10 +13,13 @@ Viewport::Viewport(){
 
 
 void Viewport::init(int width, int height) {
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))  // tie window context to glad's opengl funcs
-        throw("Unable to context to OpenGL");
 
     renderer.InitRenderer(width, height);
+    for (int i = 0; i < 12; ++i) {
+        m_colors[i] = glm::vec4(0.f, 0.f, 0.f, 0.f);
+    }
+    m_width = width;
+    m_height = height;
 }
 
 void Viewport::setColors(const std::vector<Color> &colors) {

@@ -32,6 +32,7 @@ namespace Odin {
         GLuint quadVBO = 0;
 
         Bloom bloom;
+        Effect dummy_effect;
 
         GShader light_shader;
 

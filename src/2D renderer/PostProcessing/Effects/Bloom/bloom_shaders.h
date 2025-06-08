@@ -79,7 +79,7 @@ in vec2 TexCoords;
 uniform sampler2D bloomTex;
 uniform sampler2D mainTex;
 
-float bias = 0.04;
+float bias = 0.2;
 
 // Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
 vec3 aces(vec3 x) {
@@ -202,8 +202,7 @@ void main()
 {
     vec4 threshold_ = vec4(threshold, threshold - knee, knee * 2, 0.25 / knee);
     vec4 color = texture(screenTexture, TexCoords);
-    // FragColor =  Prefilter(color, threshold_);
-    FragColor = color;
+    FragColor =  Prefilter(color, threshold_);
 }
 )"""";
 

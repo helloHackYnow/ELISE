@@ -41,7 +41,8 @@ bool EliseApp::init() {
     glfwMaximizeWindow(window);
     glfwSwapInterval(1); // Enable vsync
 
-
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))  // tie window context to glad's opengl funcs
+        throw("Unable to context to OpenGL");
 
     // Load icons
     GLFWimage icons[2];

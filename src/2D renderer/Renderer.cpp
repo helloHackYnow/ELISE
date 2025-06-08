@@ -16,9 +16,10 @@ namespace Odin {
 
         fbo_internal.Init(width, height, true, 1);
         fbo_postProcess.Init(width, height, true, 1);
-        fbo_output.Init(width, height, false, 1);
+        fbo_output.Init(width, height, true, 1);
 
         bloom.Init();
+        dummy_effect.Init();
     }
 
     unsigned int Renderer::GetTexture() {
@@ -27,50 +28,50 @@ namespace Odin {
 
     void Renderer::Render(const std::array<glm::vec4, 12> &windows_colors) {
 
-        glViewport(0, 0, viewport_width, viewport_height);
+    glViewport(0, 0, viewport_width, viewport_height);
 
-        fbo_output.Use();
-        glClearColor(1.f, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // First, render to the internal framebuffer
+    fbo_internal.Use();
+    glClearColor(0.f, 0.f, 0.f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Draw the lights
+    light_shader.use();
+    glBindVertexArray(quadVAO);
 
-        fbo_internal.Use(); // Bind fbo_internal
+    for (int i = 0; i < 12; ++i) {
+        glm::vec2 pos; float scale = 0.2f;
+        if (i < 5) pos = { -0.8f + 0.3f * i,  0.5f };
+        else if (i < 7) pos = { -0.2f + 0.3f * (i - 5), 0.0f };
+        else pos = { -0.5f + 0.3f * (i - 7), -0.5f };
 
+        light_shader.setVec4("uColor", windows_colors.at(i) * 2.f);
+        light_shader.setVec2("uPosition", glm::vec2(pos[0], pos[1]));
+        light_shader.setFloat("uScale", scale);
 
-        glClearColor(1.f, 0.f, 0.f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // TODO : draw the windows
-        light_shader.use();
-        glBindVertexArray(quadVAO);
-
-        for (int i = 0; i < 12; ++i) {
-            glm::vec2 pos; float scale = 0.2f;
-            if (i < 5) pos = { -0.8f + 0.3f * i,  0.5f };
-            else if (i < 7) pos = { -0.2f + 0.3f * (i - 5), 0.0f };
-            else pos = { -0.5f + 0.3f * (i - 7), -0.5f };
-
-            light_shader.setVec4("uColor", glm::vec4(10.0f, 10.0f, 10.0f, 1.0f));
-            light_shader.setVec2("uPosition", glm::vec2(pos[0], pos[1]));
-            light_shader.setFloat("uScale", scale);
-
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-
-
-        //Copy fbo_internal to postProcess
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_internal.ID());
-
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_postProcess.ID());
-
-        glBlitFramebuffer(0, 0, viewport_width, viewport_height, 0, 0, viewport_width, viewport_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); // Unbin fbo
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-        bloom.Apply(fbo_internal, fbo_output, viewport_width, viewport_height);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
+
+    // Prepare the output framebuffer
+    fbo_output.Use();
+    glClearColor(1.f, 0, 0, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Now blit from internal to output
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_internal.ID());
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_postProcess.ID());
+    glBlitFramebuffer(0, 0, viewport_width, viewport_height, 
+                     0, 0, viewport_width, viewport_height, 
+                     GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    // CRITICAL: Restore the default framebuffer binding for ImGui
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+    // Alternatively, you could apply post-processing effects here
+    bloom.Apply(fbo_postProcess, fbo_output, viewport_width, viewport_height);
+}
 
     void Renderer::setViewport(int width, int height) {
         viewport_height = height;
@@ -101,4 +102,3 @@ namespace Odin {
         glBindVertexArray(0);
     }
 }
-

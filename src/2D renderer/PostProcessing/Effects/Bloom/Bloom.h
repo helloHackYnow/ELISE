@@ -10,8 +10,8 @@ namespace Odin
 	public:
 		Bloom();
 
-		void Init();
-		void Apply(FrameBuffer& fbo_in, FrameBuffer& fbo_out, int w_width, int w_height);
+		void Init() override;
+		void Apply(FrameBuffer& fbo_in, FrameBuffer& fbo_out, int w_width, int w_height) override;
 
 		float knee = 1;
 		float threshold = 1;
