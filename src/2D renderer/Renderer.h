@@ -11,6 +11,8 @@
 #include "../LightManager.h"
 #include "PostProcessing/Effects/Bloom/Bloom.h"
 #include "default_shaders.h"
+#include "../../libs/glm/glm.hpp"
+#include <array>
 
 
 namespace Odin {
