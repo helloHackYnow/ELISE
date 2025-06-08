@@ -27,6 +27,10 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
+      - name: Debug Build Directory
+        run: dir build\Release
+
+
       - name: Package binaries
         run: |
           mkdir dist
