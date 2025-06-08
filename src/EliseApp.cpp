@@ -549,7 +549,7 @@ void EliseApp::draw_command_edition_window() {
 void EliseApp::handle_input() {
     ImGuiIO& io = ImGui::GetIO();
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+    if (ImGui::IsKeyPressed(ImGuiKey_Space, false)) {
         if (audio_manager.isPlaying()) {
             stop_audio();
         } else {
@@ -592,10 +592,8 @@ void EliseApp::update_viewport() {
 }
 
 void EliseApp::play_audio() {
-
     compile_commands();
-    audio_manager.play(size_t(waveform_viewer.get_cursor_position()), playback_speed);
-
+    audio_manager.play(int64_t(waveform_viewer.get_cursor_position()), playback_speed);
 }
 
 void EliseApp::stop_audio() {
