@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "../../../libs/glad/include/glad/glad.h"
+#include "../../libs/glad/include/glad/glad.h"
 #include <vector>
 #include "../../Shader/Graphics.h"
 #include "../../Framebuffer.h"

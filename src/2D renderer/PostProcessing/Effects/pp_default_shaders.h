@@ -6,7 +6,7 @@
 #define PP_DEFAULT_SHADERS_H
 
 inline const char* pp_default_vertex = R""""(
-#version 330 core
+#version 450 core
 
 layout (location = 0) in vec2 aPos;
 layout (location = 1) in vec2 aTexCoords;
@@ -21,7 +21,7 @@ void main()
 )"""";
 
 inline const char* pp_default_fragment = R""""(
-#version 330 core
+#version 450 core
 
 out vec4 FragColor;
 

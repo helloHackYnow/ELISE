@@ -6,7 +6,7 @@
 #define BLOOM_SHADERS_H
 
 inline const char* bs_blur_frag = R""""(
-#version 330 core
+#version 450 core
 
 out vec4 FragColor;
 
@@ -70,7 +70,7 @@ void main()
 )"""";
 
 inline const char* bs_combine_frag = R""""(
-#version 330 core
+#version 450 core
 
 out vec4 FragColor;
 
@@ -99,7 +99,7 @@ void main()
 )"""";
 
 inline const char* bs_downsample_frag = R""""(
-#version 330 core
+#version 450 core
 
 out vec4 FragColor;
 
@@ -162,7 +162,7 @@ void main()
 )"""";
 
 inline const char* bs_prefilter_frag = R""""(
-#version 330 core
+#version 450 core
 
 out vec4 FragColor;
 
@@ -202,7 +202,8 @@ void main()
 {
     vec4 threshold_ = vec4(threshold, threshold - knee, knee * 2, 0.25 / knee);
     vec4 color = texture(screenTexture, TexCoords);
-    FragColor =  Prefilter(color, threshold_);
+    // FragColor =  Prefilter(color, threshold_);
+    FragColor = color;
 }
 )"""";
 
@@ -210,7 +211,7 @@ inline const char* bs_tonesmap_frag = R""""(
 )"""";
 
 inline const char* bs_upsample_frag = R""""(
-#version 330 core
+#version 450 core
 
 // This shader performs upsampling on a texture,
 // as taken from Call Of Duty method, presented at ACM Siggraph 2014.

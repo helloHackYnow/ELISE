@@ -15,16 +15,20 @@ EliseApp::EliseApp() {
 }
 
 bool EliseApp::init() {
+
+
+
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return false;
     }
 
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    // GL 4.5 + GLSL 450
+    const char* glsl_version = "#version 450";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
     window = glfwCreateWindow(1280, 720, "Event-Linked Illumination and Sound Engine", NULL, NULL);
@@ -36,6 +40,8 @@ bool EliseApp::init() {
     glfwMakeContextCurrent(window);
     glfwMaximizeWindow(window);
     glfwSwapInterval(1); // Enable vsync
+
+
 
     // Load icons
     GLFWimage icons[2];
@@ -455,10 +461,10 @@ void EliseApp::draw_command_edition_window() {
                         ImGui::EndCombo();
                     }
 
-                    int duration_in_ms = (gradient.duration) * 1000 / sample_rate;
+                    int duration_in_ms = (gradient.duration * 1000) / sample_rate;
                     ImGui::DragInt("Duration ms", &duration_in_ms);
                     if (duration_in_ms < 0) duration_in_ms = 0;
-                    gradient.duration = duration_in_ms * sample_rate / 1000;
+                    gradient.duration = (duration_in_ms * sample_rate) / 1000;
 
                     waveform_viewer.set_gradient_preview(keyframe.trigger_sample, gradient.duration);
 

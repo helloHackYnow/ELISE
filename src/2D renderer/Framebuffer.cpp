@@ -22,10 +22,19 @@ namespace Odin {
 	{
 		dimensions = glm::vec2(_width, _height);
 
+		GLuint internalFormat = GL_RGBA8;
+		GLenum format = GL_RGBA;
+
+		if (isHDR) {
+			internalFormat = GL_R11F_G11F_B10F;
+			format = GL_RGB;
+
+		}
+
 		glGenFramebuffers(1, &fboID);
 		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
-		texture.Init(GL_RGB, GL_R11F_G11F_B10F, _width, _height, samples);
+		texture.Init(internalFormat, format, _width, _height, samples);
 
 		texture.SetParameteri(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		texture.SetParameteri(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -61,6 +70,8 @@ namespace Odin {
 
 	void FrameBuffer::Rescale(int _width, int _height)
 	{
+		if (_width == dimensions.x && _height == dimensions.y) return;
+
 		dimensions = glm::vec2(_width, _height);
 
 		texture.Resize(_width, _height);

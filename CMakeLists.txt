@@ -41,7 +41,6 @@ add_executable(${PROJECT_NAME} src/main.cpp
         libs/glad/src/glad.c
         src/Viewport.cpp
         src/Viewport.h
-        src/shaders.h
         src/InterpolationUtils.h
         src/LightManager.h
         src/LightManager.cpp
@@ -55,8 +54,11 @@ add_executable(${PROJECT_NAME} src/main.cpp
         libs/stb_image.h
         src/2D\ renderer/Texture.cpp
         src/2D\ renderer/Framebuffer.cpp
-        "src/2D renderer/Renderer.cpp"
-        "src/2D renderer/Renderer.h"
+        src/2D\ renderer/Shader/Shader.cpp
+        src/2D\ renderer/Shader/Graphics.cpp
+        src/2D\ renderer/PostProcessing/Effects/Effect.cpp
+        src/2D\ renderer/PostProcessing/Effects/Bloom/Bloom.cpp
+        src/2D\ renderer/Renderer.cpp
 )
 
 find_package(OpenGL REQUIRED)

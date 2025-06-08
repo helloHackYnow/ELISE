@@ -18,7 +18,7 @@ namespace Odin
 			FrameBuffer* fbo = new FrameBuffer();
 			std::unique_ptr<FrameBuffer> fbo_ptr(fbo);
 			fbos.push_back(std::move(fbo_ptr));
-			fbos.at(i)->Init(1, 1);
+			fbos.at(i)->Init(1, 1, true);
 		}
 
 		// Impossible values to make sure we are rescaling during the first draw
@@ -44,24 +44,24 @@ namespace Odin
 			height = w_height;
 		}
 		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
 		
-	   // First pass (filtering)
-		/*
-	   shaders.at(0).use();
-	   shaders.at(0).setFloat("knee", knee);
-	   shaders.at(0).setFloat("threshold", threshold);
-	   shaders.at(0).setInt("screenTexture", 0);
-	   glBindTexture(GL_TEXTURE_2D, fbo_in.GetTexture());
-	   Draw(*fbos.at(0));
-	   glBindTexture(GL_TEXTURE_2D, 0);
-		*/
+		// First pass (filtering)
+		shaders.at(0).use();
+		shaders.at(0).setFloat("knee", knee);
+		shaders.at(0).setFloat("threshold", threshold);
+		shaders.at(0).setInt("screenTexture", 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, fbo_in.GetTexture());
+		Draw(*fbos.at(0));
+
 
 
 	   // Second pass (horizontal blur)
 	   shaders.at(1).use();
 	   shaders.at(1).setVec2("blur_dir", 1, 0);
 	   shaders.at(1).setInt("screenTexture", 0);
-	   glBindTexture(GL_TEXTURE_2D, fbo_in.GetTexture());
+	   glBindTexture(GL_TEXTURE_2D, fbos.at(0)->GetTexture());
 	   Draw(*fbos.at(1));
 
 	   glBindTexture(GL_TEXTURE_2D, 0);
@@ -77,7 +77,6 @@ namespace Odin
 		shaders.at(2).setInt("screenTexture", 0);
 		glBindTexture(GL_TEXTURE_2D, fbos.at(0)->GetTexture());
 		glViewport(0, 0, width / 2, height / 2);
-
 		Draw(*fbos.at(2));
 
 		//Fifth pass (second downsampling) : x4

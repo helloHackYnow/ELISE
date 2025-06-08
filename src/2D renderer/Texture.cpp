@@ -29,12 +29,12 @@ namespace Odin
 		if (infos.isMultisample)
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texID);
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, infos.samples, infos.format, _width, _height, GL_FALSE);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, infos.samples, infos.internalFormat, _width, _height, GL_FALSE);
 		}
 		else
 		{
 			glBindTexture(infos.target, texID);
-			glTexImage2D(GL_TEXTURE_2D, 0, infos.format, _width, _height, 0, infos.internalFormat, GL_FLOAT, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, infos.internalFormat, _width, _height, 0, infos.format, GL_FLOAT, nullptr);
 
 		}
 
@@ -47,12 +47,12 @@ namespace Odin
 		if (infos.isMultisample)
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texID);
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, infos.samples, infos.format, _width, _height, GL_FALSE);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, infos.samples, infos.internalFormat, _width, _height, GL_FALSE);
 		}
 		else
 		{
 			glBindTexture(infos.target, texID);
-			glTexImage2D(infos.target, 0, infos.format, _width, _height, 0, infos.internalFormat, GL_FLOAT, nullptr);
+			glTexImage2D(infos.target, 0, infos.internalFormat, _width, _height, 0, infos.format, GL_FLOAT, nullptr);
 		}
 		
 

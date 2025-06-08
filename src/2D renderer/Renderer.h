@@ -21,7 +21,7 @@ namespace Odin {
         void InitRenderer(int width = 800, int height = 600);
 
         unsigned int GetTexture();
-        void Render(const std::vector<Color>& windows_colors);
+        void Render(const std::array<glm::vec4, 12>& windows_colors);
 
         void setViewport(int width, int height);
 

@@ -5,15 +5,18 @@
 #include "Renderer.h"
 
 namespace Odin {
-    Renderer::Renderer() {
-        light_shader = GShader(light_vert, light_frag, true);
-    }
+    Renderer::Renderer() = default;
 
     void Renderer::InitRenderer(int width, int height) {
+        light_shader = GShader(light_vert, light_frag, true);
+
+        InitVAO();
+
         this->setViewport(width, height);
+
         fbo_internal.Init(width, height, true, 1);
         fbo_postProcess.Init(width, height, true, 1);
-        fbo_output.Init(width, height, true, 1);
+        fbo_output.Init(width, height, false, 1);
 
         bloom.Init();
     }
@@ -22,13 +25,19 @@ namespace Odin {
         return fbo_output.GetTexture();
     }
 
-    void Renderer::Render(const std::vector<Color> &windows_colors) {
-        glEnable(GL_MULTISAMPLE);
-        fbo_internal.Use(); // Bind fbo_internal
+    void Renderer::Render(const std::array<glm::vec4, 12> &windows_colors) {
 
         glViewport(0, 0, viewport_width, viewport_height);
 
-        glClearColor(0, 0, 0, 1.0f);
+        fbo_output.Use();
+        glClearColor(1.f, 0, 0, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        fbo_internal.Use(); // Bind fbo_internal
+
+
+        glClearColor(1.f, 0.f, 0.f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // TODO : draw the windows
@@ -36,12 +45,12 @@ namespace Odin {
         glBindVertexArray(quadVAO);
 
         for (int i = 0; i < 12; ++i) {
-            glm::vec2 pos; float scale = 0.1f;
+            glm::vec2 pos; float scale = 0.2f;
             if (i < 5) pos = { -0.8f + 0.3f * i,  0.5f };
             else if (i < 7) pos = { -0.2f + 0.3f * (i - 5), 0.0f };
             else pos = { -0.5f + 0.3f * (i - 7), -0.5f };
 
-            light_shader.setVec4("uColor", glm::vec4(1, 1, 1, 1));
+            light_shader.setVec4("uColor", glm::vec4(10.0f, 10.0f, 10.0f, 1.0f));
             light_shader.setVec2("uPosition", glm::vec2(pos[0], pos[1]));
             light_shader.setFloat("uScale", scale);
 
@@ -56,10 +65,11 @@ namespace Odin {
 
         glBlitFramebuffer(0, 0, viewport_width, viewport_height, 0, 0, viewport_width, viewport_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0); // Unbin fbo
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-        bloom.Apply(fbo_postProcess, fbo_output, viewport_width, viewport_height);
+        bloom.Apply(fbo_internal, fbo_output, viewport_width, viewport_height);
     }
 
     void Renderer::setViewport(int width, int height) {
