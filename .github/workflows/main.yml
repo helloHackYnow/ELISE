@@ -30,7 +30,6 @@ jobs:
       - name: Package binaries
         run: |
           mkdir dist
-          copy D:\\a\\ELISE\\ELISE\\build\\Release\\imgui.lib dist\\imgui.lib
           copy D:\\a\\ELISE\\ELISE\\build\\Release\\ELISE.exe dist\\ELISE.exe
 
       - name: Bundle release files into ZIP
