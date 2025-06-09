@@ -85,7 +85,9 @@ void MP4Encoder::initAudioStream() {
     _audioCtx = avcodec_alloc_context3(codec);
     _audioCtx->codec_id = AV_CODEC_ID_AAC;
     _audioCtx->sample_rate = _sampleRate;
-    _audioCtx->ch_layout = {AVChannelOrder::AV_CHANNEL_ORDER_UNSPEC, _channels};
+
+    av_channel_layout_default(&_audioCtx->ch_layout, 1);
+
     _audioCtx->sample_fmt = codec->sample_fmts[0]; // e.g. AV_SAMPLE_FMT_FLTP
     _audioCtx->bit_rate = 128000;
     _audioCtx->time_base = AVRational{1, _sampleRate};
