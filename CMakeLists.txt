@@ -34,7 +34,7 @@ function(setup_ffmpeg_static)
 
     if(WIN32)
         # Use BtbN's static builds for Windows
-        set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip")
+        set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip")
         set(FFMPEG_ARCHIVE "ffmpeg-win64-static.zip")
 
     elseif(APPLE)
@@ -313,7 +313,10 @@ target_link_libraries(${PROJECT_NAME}
         glfw
         ${CMAKE_DL_LIBS}
         OpenGL::GL
-        ffmpeg
+        avcodec
+        avformat
+        avutil
+        swscale
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
