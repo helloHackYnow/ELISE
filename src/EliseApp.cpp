@@ -491,6 +491,7 @@ void EliseApp::draw_command_edition_window() {
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
         } else {
+            ImGui::Spacing();
             auto& command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
             auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe_uuid]);
 
@@ -932,12 +933,7 @@ void EliseApp::copy_commands(const std::vector<Command> &commands) {
 
 void EliseApp::color_picker(const char *label, Color &color) {
 
-    float col[] = {
-        color.r / 255.0f,
-        color.g / 255.0f,
-        color.b / 255.0f,
-        color.a / 255.0f
-    };
+
 
     ImGui::PushID(label);
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -949,13 +945,37 @@ void EliseApp::color_picker(const char *label, Color &color) {
     if (has_copied_color) ImGui::PopStyleColor(1);
     ImGui::EndDisabled();
     ImGui::PopStyleColor();
+    ImGui::SameLine();
+
+    ImGui::PushItemWidth(40);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 0)),
+    ImGui::PushID("r");
+    ImGui::InputInt("", &color.r, 0);
+    ImGui::PopID();
+    ImGui::SameLine();
+    color.r = std::min(std::max(color.r, 0), 255);
+
+    ImGui::PushID("g");
+    ImGui::InputInt("", &color.g, 0);
+    ImGui::PopID();
+    ImGui::SameLine();
+    color.g = std::min(std::max(color.g, 0), 255);
+
+    ImGui::PushID("b");
+    ImGui::InputInt("", &color.b, 0);
+    ImGui::PopID();
+    color.b = std::min(std::max(color.b, 0), 255);
+    ImGui::PopStyleVar();
+    ImGui::PopItemWidth();
 
     ImGui::SameLine();
-    // End color
-    col[0] = color.r / 255.0f;
-    col[1] = color.g / 255.0f;
-    col[2] = color.b / 255.0f;
-    col[3] = color.a / 255.0f;
+    float col[] = {
+        color.r / 255.0f,
+        color.g / 255.0f,
+        color.b / 255.0f,
+        color.a / 255.0f
+    };
+
     ImGui::ColorEdit4(label, col, ImGuiColorEditFlags_NoInputs);
     color = {int(col[0] * 255), int(col[1] * 255), int(col[2] * 255), int(col[3] * 255)};
 
