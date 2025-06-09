@@ -34,6 +34,11 @@ jobs:
         run: |
           mkdir dist
           copy build\Release\ELISE.exe dist\ELISE.exe
+          copy build\ffmpeg\bin\swscale-9.dll dist\swscale-9.dll
+          copy build\ffmpeg\bin\swresample-6.dll dist\swresample-6.dll
+          copy build\ffmpeg\bin\avutil-60.dll dist\avutil-60.dll
+          copy build\ffmpeg\bin\avformat-62.dll dist\avformat-62.dll
+          copy build\ffmpeg\bin\avcodec-62.dll dist\avcodec-62.dll
 
       - name: Bundle release files into ZIP
         run: Compress-Archive -Path dist\* -DestinationPath ELISE.zip
