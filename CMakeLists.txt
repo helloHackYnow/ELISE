@@ -29,226 +29,67 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC glfw)
 
-function(setup_ffmpeg_static)
-    set(FFMPEG_DIR "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg")
-
+function(setup_ffmpeg_simple)
     if(WIN32)
-        # Use BtbN's static builds for Windows
-        set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip")
-        set(FFMPEG_ARCHIVE "ffmpeg-win64-static.zip")
+        set(FFMPEG_DIR "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg")
 
-    elseif(APPLE)
-        # For macOS, we'll need to build static or find static builds
-        # Using a static build source (you may need to adjust this URL)
-        set(FFMPEG_URL "https://github.com/eugeneware/ffmpeg-static/releases/download/b4.4.0/darwin-x64")
-        set(FFMPEG_ARCHIVE "ffmpeg-macos-static")
+        # Download FFmpeg if not present
+        if(NOT EXISTS "${FFMPEG_DIR}")
+            message(STATUS "Downloading FFmpeg...")
+            set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip")
+            set(FFMPEG_ARCHIVE "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg.zip")
 
-    else()
-        # Linux - we'll download static builds or use system static libs
-        set(FFMPEG_URL "https://github.com/eugeneware/ffmpeg-static/releases/download/b4.4.0/linux-x64")
-        set(FFMPEG_ARCHIVE "ffmpeg-linux-static")
-    endif()
+            file(DOWNLOAD "${FFMPEG_URL}" "${FFMPEG_ARCHIVE}" SHOW_PROGRESS)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "${FFMPEG_ARCHIVE}"
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
-    # Download and extract if not already present
-    if(NOT EXISTS "${FFMPEG_DIR}")
-        message(STATUS "Downloading static FFmpeg for ${CMAKE_SYSTEM_NAME}...")
-
-        if(WIN32)
-            # Windows: Download ZIP archive
-            file(DOWNLOAD
-                    "${FFMPEG_URL}"
-                    "${CMAKE_CURRENT_BINARY_DIR}/${FFMPEG_ARCHIVE}"
-                    SHOW_PROGRESS
-                    TIMEOUT 300
-            )
-
-            message(STATUS "Extracting FFmpeg...")
-            execute_process(
-                    COMMAND ${CMAKE_COMMAND} -E tar xf "${FFMPEG_ARCHIVE}"
-                    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-                    RESULT_VARIABLE EXTRACT_RESULT
-            )
-
-            if(NOT EXTRACT_RESULT EQUAL 0)
-                message(FATAL_ERROR "Failed to extract FFmpeg archive")
-            endif()
-
-            # Find the extracted directory and rename it to ffmpeg
+            # Find extracted directory and rename
             file(GLOB EXTRACTED_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-*")
             if(EXTRACTED_DIRS)
                 list(GET EXTRACTED_DIRS 0 EXTRACTED_DIR)
-                message(STATUS "Found extracted directory: ${EXTRACTED_DIR}")
                 file(RENAME "${EXTRACTED_DIR}" "${FFMPEG_DIR}")
-            else()
-                message(FATAL_ERROR "Could not find extracted FFmpeg directory")
             endif()
 
-            # Clean up archive
-            file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/${FFMPEG_ARCHIVE}")
+            file(REMOVE "${FFMPEG_ARCHIVE}")
+        endif()
 
+        # Find include and lib directories
+        file(GLOB_RECURSE AVCODEC_HEADER "${FFMPEG_DIR}/*/libavcodec/avcodec.h")
+        if(AVCODEC_HEADER)
+            get_filename_component(FFMPEG_INCLUDE_DIR "${AVCODEC_HEADER}" DIRECTORY)
+            get_filename_component(FFMPEG_INCLUDE_DIR "${FFMPEG_INCLUDE_DIR}" DIRECTORY)
+            message(STATUS "Found FFmpeg headers: ${FFMPEG_INCLUDE_DIR}")
         else()
-            # Linux/macOS: Direct binary download (for executables)
-            # For libraries, we'll use a different approach
-            message(STATUS "Setting up static FFmpeg for ${CMAKE_SYSTEM_NAME}...")
-            file(MAKE_DIRECTORY "${FFMPEG_DIR}")
-
-            # We'll need to handle this differently for static libraries
-            # Let's use system static packages instead
-            find_package(PkgConfig REQUIRED)
-            pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-                    libavcodec
-                    libavformat
-                    libavutil
-                    libswscale
-            )
-
-            # Try to find static versions
-            set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-
-            find_library(AVCODEC_STATIC_LIB avcodec REQUIRED)
-            find_library(AVFORMAT_STATIC_LIB avformat REQUIRED)
-            find_library(AVUTIL_STATIC_LIB avutil REQUIRED)
-            find_library(SWSCALE_STATIC_LIB swscale REQUIRED)
-
-            # Create static imported targets
-            add_library(ffmpeg::avcodec STATIC IMPORTED)
-            add_library(ffmpeg::avformat STATIC IMPORTED)
-            add_library(ffmpeg::avutil STATIC IMPORTED)
-            add_library(ffmpeg::swscale STATIC IMPORTED)
-
-            set_target_properties(ffmpeg::avcodec PROPERTIES
-                    IMPORTED_LOCATION "${AVCODEC_STATIC_LIB}"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}"
-            )
-
-            set_target_properties(ffmpeg::avformat PROPERTIES
-                    IMPORTED_LOCATION "${AVFORMAT_STATIC_LIB}"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}"
-            )
-
-            set_target_properties(ffmpeg::avutil PROPERTIES
-                    IMPORTED_LOCATION "${AVUTIL_STATIC_LIB}"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}"
-            )
-
-            set_target_properties(ffmpeg::swscale PROPERTIES
-                    IMPORTED_LOCATION "${SWSCALE_STATIC_LIB}"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}"
-            )
-
-            # Create convenience target
-            add_library(ffmpeg INTERFACE)
-            target_link_libraries(ffmpeg INTERFACE
-                    ffmpeg::avcodec
-                    ffmpeg::avformat
-                    ffmpeg::avutil
-                    ffmpeg::swscale
-                    # Add system dependencies for static linking
-                    ${FFMPEG_STATIC_LIBRARIES}
-                    -static-libgcc
-                    -static-libstdc++
-            )
-
-            return()
+            message(FATAL_ERROR "Could not find FFmpeg headers")
         endif()
+
+        file(GLOB_RECURSE AVCODEC_LIB "${FFMPEG_DIR}/*/avcodec.lib")
+        if(AVCODEC_LIB)
+            get_filename_component(FFMPEG_LIB_DIR "${AVCODEC_LIB}" DIRECTORY)
+            message(STATUS "Found FFmpeg libraries: ${FFMPEG_LIB_DIR}")
+        else()
+            message(FATAL_ERROR "Could not find FFmpeg libraries")
+        endif()
+
+        # Set global variables that can be used later
+        set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INCLUDE_DIR}" PARENT_SCOPE)
+        set(FFMPEG_LIBRARIES
+                "${FFMPEG_LIB_DIR}/avcodec.lib"
+                "${FFMPEG_LIB_DIR}/avformat.lib"
+                "${FFMPEG_LIB_DIR}/avutil.lib"
+                "${FFMPEG_LIB_DIR}/swscale.lib"
+                # Windows system libraries
+                ws2_32 secur32 bcrypt mfplat mfuuid strmiids ole32 user32 kernel32 psapi advapi32
+                PARENT_SCOPE)
+
+    else()
+        # For Linux/macOS, use pkg-config
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(FFMPEG REQUIRED libavcodec libavformat libavutil libswscale)
+
+        set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INCLUDE_DIRS}" PARENT_SCOPE)
+        set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" PARENT_SCOPE)
     endif()
-
-    # Windows static library setup
-    if(WIN32)
-        # Debug: List contents of the ffmpeg directory
-        message(STATUS "Contents of ${FFMPEG_DIR}:")
-        file(GLOB_RECURSE FFMPEG_CONTENTS "${FFMPEG_DIR}/*")
-        foreach(item ${FFMPEG_CONTENTS})
-            message(STATUS "  ${item}")
-        endforeach()
-
-        # Look for headers in common locations
-        set(POSSIBLE_INCLUDE_DIRS
-                "${FFMPEG_DIR}/include"
-                "${FFMPEG_DIR}/include/ffmpeg"
-                "${FFMPEG_DIR}/dev/include"
-        )
-
-        set(FFMPEG_INCLUDE_DIR "")
-        foreach(dir ${POSSIBLE_INCLUDE_DIRS})
-            if(EXISTS "${dir}/libavcodec/avcodec.h")
-                set(FFMPEG_INCLUDE_DIR "${dir}")
-                break()
-            endif()
-        endforeach()
-
-        if(NOT FFMPEG_INCLUDE_DIR)
-            message(FATAL_ERROR "FFmpeg headers not found. Searched in: ${POSSIBLE_INCLUDE_DIRS}")
-        endif()
-
-        message(STATUS "Found FFmpeg headers in: ${FFMPEG_INCLUDE_DIR}")
-
-        # Look for libraries in common locations
-        set(POSSIBLE_LIB_DIRS
-                "${FFMPEG_DIR}/lib"
-                "${FFMPEG_DIR}/lib/x64"
-                "${FFMPEG_DIR}/dev/lib"
-        )
-
-        set(FFMPEG_LIB_DIR "")
-        foreach(dir ${POSSIBLE_LIB_DIRS})
-            if(EXISTS "${dir}/avcodec.lib")
-                set(FFMPEG_LIB_DIR "${dir}")
-                break()
-            endif()
-        endforeach()
-
-        if(NOT FFMPEG_LIB_DIR)
-            message(FATAL_ERROR "FFmpeg libraries not found. Searched in: ${POSSIBLE_LIB_DIRS}")
-        endif()
-
-        message(STATUS "Found FFmpeg libraries in: ${FFMPEG_LIB_DIR}")
-
-        # Set up static imported targets for Windows
-        set(FFMPEG_LIBS avcodec avformat avutil swscale)
-
-        foreach(lib IN LISTS FFMPEG_LIBS)
-            add_library(ffmpeg::${lib} STATIC IMPORTED)
-
-            set_target_properties(ffmpeg::${lib} PROPERTIES
-                    IMPORTED_LOCATION "${FFMPEG_LIB_DIR}/${lib}.lib"
-                    INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIR}"
-            )
-
-            # Verify static library exists
-            if(NOT EXISTS "${FFMPEG_LIB_DIR}/${lib}.lib")
-                message(FATAL_ERROR "FFmpeg static library not found: ${FFMPEG_LIB_DIR}/${lib}.lib")
-            endif()
-        endforeach()
-
-        # Create convenience target with Windows dependencies
-        add_library(ffmpeg INTERFACE)
-        target_link_libraries(ffmpeg INTERFACE
-                ffmpeg::avcodec
-                ffmpeg::avformat
-                ffmpeg::avutil
-                ffmpeg::swscale
-                # Windows system libraries needed for static FFmpeg
-                ws2_32      # Winsock
-                secur32     # Security
-                bcrypt      # Cryptography
-                mfplat      # Media Foundation
-                mfuuid      # Media Foundation UUIDs
-                strmiids    # DirectShow
-                ole32       # OLE
-                user32      # User interface
-                kernel32    # Kernel
-                psapi       # Process API
-                advapi32    # Advanced API
-        )
-
-        # Force static linking
-        set_target_properties(ffmpeg PROPERTIES
-                INTERFACE_LINK_OPTIONS "/WHOLEARCHIVE"
-        )
-    endif()
-
-    message(STATUS "Static FFmpeg setup complete: ${FFMPEG_DIR}")
 endfunction()
 
 
@@ -269,7 +110,9 @@ elseif(UNIX)
     # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
 
-setup_ffmpeg_static()
+setup_ffmpeg_simple()
+
+
 
 add_executable(${PROJECT_NAME} src/main.cpp
         src/WaveformViewer.cpp
@@ -305,6 +148,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/VideoEncoder.h
 )
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})
+
 find_package(OpenGL REQUIRED)
 
 target_link_libraries(${PROJECT_NAME}
@@ -313,10 +158,7 @@ target_link_libraries(${PROJECT_NAME}
         glfw
         ${CMAKE_DL_LIBS}
         OpenGL::GL
-        avcodec
-        avformat
-        avutil
-        swscale
+        ${FFMPEG_LIBRARIES}
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
