@@ -636,6 +636,7 @@ void EliseApp::handle_input() {
 }
 
 void EliseApp::update() {
+    if (is_exporting) return;
     update_dialogs();
     handle_input();
     update_waveform_viewer();
