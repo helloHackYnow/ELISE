@@ -1,4 +1,3 @@
-#define NOMINMAX
 #include "EliseApp.h"
 
 

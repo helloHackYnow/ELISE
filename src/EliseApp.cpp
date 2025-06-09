@@ -10,6 +10,10 @@
 #include "imgui_internal.h"
 #include "../fonts/icon_font.h"
 
+#undef min
+#undef max
+
+
 
 EliseApp::EliseApp() {
 }
