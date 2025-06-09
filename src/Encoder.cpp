@@ -85,8 +85,7 @@ void MP4Encoder::initAudioStream() {
     _audioCtx = avcodec_alloc_context3(codec);
     _audioCtx->codec_id = AV_CODEC_ID_AAC;
     _audioCtx->sample_rate = _sampleRate;
-    _audioCtx->channel_layout = (_channels == 1 ? AV_CH_LAYOUT_MONO : AV_CH_LAYOUT_STEREO);
-    _audioCtx->channels = av_get_channel_layout_nb_channels(_audioCtx->channel_layout);
+    _audioCtx->ch_layout = {AVChannelOrder::AV_CHANNEL_ORDER_UNSPEC, _channels};
     _audioCtx->sample_fmt = codec->sample_fmts[0]; // e.g. AV_SAMPLE_FMT_FLTP
     _audioCtx->bit_rate = 128000;
     _audioCtx->time_base = AVRational{1, _sampleRate};
@@ -100,7 +99,7 @@ void MP4Encoder::initAudioStream() {
     // Allocate audio frame
     _audioFrame = av_frame_alloc();
     _audioFrame->format = _audioCtx->sample_fmt;
-    _audioFrame->channel_layout = _audioCtx->channel_layout;
+    _audioFrame->ch_layout = _audioCtx->ch_layout;
     _audioFrame->sample_rate = _audioCtx->sample_rate;
     _audioFrame->nb_samples = _audioCtx->frame_size;
     ret = av_frame_get_buffer(_audioFrame, 0);
@@ -108,11 +107,13 @@ void MP4Encoder::initAudioStream() {
 
     // Initialize swr if needed (input float to output planar)
     if (_audioCtx->sample_fmt == AV_SAMPLE_FMT_FLTP) {
-        _swrCtx = swr_alloc_set_opts(
-            nullptr,
-            _audioCtx->channel_layout, _audioCtx->sample_fmt, _audioCtx->sample_rate,
-            _audioCtx->channel_layout, AV_SAMPLE_FMT_FLT, _audioCtx->sample_rate,
+        ret = swr_alloc_set_opts2(
+            &_swrCtx,
+            &_audioCtx->ch_layout, _audioCtx->sample_fmt, _audioCtx->sample_rate,
+            &_audioCtx->ch_layout, AV_SAMPLE_FMT_FLT, _audioCtx->sample_rate,
             0, nullptr);
+        CHECK_ERR(ret);
+
         ret = swr_init(_swrCtx);
         CHECK_ERR(ret);
     }
