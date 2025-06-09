@@ -20,6 +20,7 @@ AudioManager::~AudioManager() {
 }
 
 bool AudioManager::loadMP3(const std::string& path) {
+    mp3_path = path;
     ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 1, sample_rate);
     ma_decoder decoder;
 
@@ -49,6 +50,14 @@ const std::vector<float> & AudioManager::getOriginalSamples() const {
 
 int AudioManager::getSampleRate() const {
     return sample_rate;
+}
+
+std::string AudioManager::getMP3Path() const {
+    return mp3_path;
+}
+
+int AudioManager::getChannels() const {
+    return 0;
 }
 
 void AudioManager::play(const int start_sample, float speed_mul) {

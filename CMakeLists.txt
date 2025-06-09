@@ -5,6 +5,14 @@ project(ELISE VERSION 0.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 # Add GLFW submodule
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -78,6 +86,7 @@ function(setup_ffmpeg_simple)
                 "${FFMPEG_LIB_DIR}/avformat.lib"
                 "${FFMPEG_LIB_DIR}/avutil.lib"
                 "${FFMPEG_LIB_DIR}/swscale.lib"
+                "${FFMPEG_LIB_DIR}/swresample.lib"
                 # Windows system libraries
                 ws2_32 secur32 bcrypt mfplat mfuuid strmiids ole32 user32 kernel32 psapi advapi32
                 PARENT_SCOPE)
@@ -85,7 +94,7 @@ function(setup_ffmpeg_simple)
     else()
         # For Linux/macOS, use pkg-config
         find_package(PkgConfig REQUIRED)
-        pkg_check_modules(FFMPEG REQUIRED libavcodec libavformat libavutil libswscale)
+        pkg_check_modules(FFMPEG REQUIRED libavcodec libavformat libavutil libswscale libswresample)
 
         set(FFMPEG_INCLUDE_DIRS "${FFMPEG_INCLUDE_DIRS}" PARENT_SCOPE)
         set(FFMPEG_LIBRARIES "${FFMPEG_LIBRARIES}" PARENT_SCOPE)
@@ -144,8 +153,8 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/2D\ renderer/PostProcessing/Effects/Effect.cpp
         src/2D\ renderer/PostProcessing/Effects/Bloom/Bloom.cpp
         src/2D\ renderer/Renderer.cpp
-        src/VideoEncoder.cpp
-        src/VideoEncoder.h
+        src/Encoder.cpp
+        src/Encoder.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})

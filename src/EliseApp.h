@@ -14,7 +14,8 @@
 #include "WaveformViewer.h"
 #include "AudioManager.h"
 #include <GLFW/glfw3.h>
-#include "Viewport.h"
+
+#include "Encoder.h"
 #include "LightManager.h"
 #include "ImGui_themes.h"
 #include "JsonHandler.h"
@@ -30,7 +31,7 @@
 #include "../resources/MaterialSymbols.h"
 #include "../libs/ImGuiNotify.hpp"
 
-#include "VideoEncoder.h"
+#include "2D renderer/Renderer.h"
 
 class EliseApp {
 
@@ -50,6 +51,7 @@ private:
 
     void draw();
 
+    void draw_export_pop_up();
     void draw_menu_bar();
     void draw_player();
     void draw_viewport();
@@ -61,7 +63,6 @@ private:
     void update();
     void update_waveform_viewer();
     void update_light_manager();
-    void update_viewport();
 
     // Audio player
     void play_audio();
@@ -88,6 +89,7 @@ private:
     void on_open_project();
     void on_export();
     void on_load_song();
+    void on_export_video();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);
@@ -103,15 +105,20 @@ private:
     // ImGui components
     void color_picker(const char* label, Color& color);
 
-    void export_video(const std::string& path);
+    void start_export(const std::string& path);
+    void export_frame();
+    void update_export();
+
 
 private:
+    double target_application_framerate = 60;
+
     GLFWwindow* window;
     WaveformViewer waveform_viewer;
     AudioManager audio_manager;
-    Viewport viewport;
-
     LightManager light_manager;
+
+    Odin::Renderer renderer;
 
     int light_count = 12;
     std::vector<Group> groups;
@@ -153,6 +160,9 @@ private:
     std::unique_ptr<pfd::save_file> export_project_dialog;
     bool is_export_project_dialog_active = false;
 
+    std::unique_ptr<pfd::save_file> export_video_dialog;
+    bool is_export_video_dialog_active = false;
+
     // Save / filename
     bool is_loaded_from_file = false;
     std::string filepath;
@@ -170,9 +180,11 @@ private:
 
     // Video exporting system
     //-----------------------
-    VideoEncoder video_encoder;
     bool is_exporting = false;
-    size_t export_framerate = 60;
+    double export_framerate = 60.f;
+    int current_frame = 0;
+    int max_frame = 0;
+    MP4Encoder *encoder = nullptr;
 };
 
 

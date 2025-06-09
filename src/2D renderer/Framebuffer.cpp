@@ -108,7 +108,7 @@ namespace Odin {
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
-    void FrameBuffer::Use()
+    void FrameBuffer::Use() const
     {
         glBindFramebuffer(GL_FRAMEBUFFER, fboID);
     }

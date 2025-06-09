@@ -16,7 +16,7 @@ namespace Odin {
 
         fbo_internal.Init(width, height, true, 1);
         fbo_postProcess.Init(width, height, true, 1);
-        fbo_output.Init(width, height, true, 1);
+        fbo_output.Init(width, height, false, 1);
 
         bloom.Init();
         dummy_effect.Init();
@@ -24,6 +24,10 @@ namespace Odin {
 
     unsigned int Renderer::GetTexture() {
         return fbo_output.GetTexture();
+    }
+
+    const FrameBuffer& Renderer::GetFboOut() {
+        return fbo_output;
     }
 
     void Renderer::Render(const std::array<glm::vec4, 12> &windows_colors) {
@@ -51,7 +55,7 @@ namespace Odin {
             else if (i < 7) pos = { -0.2f + x_spacing * (i - 5), y_mid };
             else pos = { -0.5f + x_spacing * (i - 7), y_bot };
 
-            light_shader.setVec4("uColor", windows_colors.at(i) * 2.5f);
+            light_shader.setVec4("uColor", windows_colors.at(i) * 5.f);
             light_shader.setVec2("uPosition", glm::vec2(pos[0], pos[1]));
             light_shader.setFloat("uScale", scale);
 

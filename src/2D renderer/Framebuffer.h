@@ -24,7 +24,7 @@ namespace Odin
 
 		void Init(int _width, int _height, bool isHDR = false, int samples = 1);
 		void Rescale(int _width, int _height);
-		void Use();
+		void Use() const;
 
 		unsigned int GetTexture();
 		unsigned int ID();

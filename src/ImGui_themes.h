@@ -151,6 +151,8 @@ inline void setBessDarkColors() {
     colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.50f, 1.00f);
     colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.45f, 0.45f, 0.55f, 1.00f);
 
+    colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.25f, 1.00f);
+
     // Style tweaks
     style.WindowRounding = 5.0f;
     style.FrameRounding = 5.0f;

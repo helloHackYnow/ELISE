@@ -21,6 +21,8 @@ public:
 
     const std::vector<float>& getOriginalSamples() const;
     int getSampleRate() const;
+    std::string getMP3Path() const;
+    int getChannels() const;
 
     void play(int start_sample = 0, float speed_mul = 1.0f);
     void pause();
@@ -37,6 +39,7 @@ private:
 
 private:
     std::vector<float> original_samples;
+    std::string mp3_path;
     int sample_rate = 44100;
 
     ma_device device{};

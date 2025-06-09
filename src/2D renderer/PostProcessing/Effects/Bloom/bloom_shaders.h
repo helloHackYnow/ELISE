@@ -79,7 +79,7 @@ in vec2 TexCoords;
 uniform sampler2D bloomTex;
 uniform sampler2D mainTex;
 
-float bias = 0.2;
+float bias = 0.1f;
 
 // Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
 vec3 aces(vec3 x) {

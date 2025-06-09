@@ -16,8 +16,6 @@ EliseApp::EliseApp() {
 
 bool EliseApp::init() {
 
-
-
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -39,7 +37,7 @@ bool EliseApp::init() {
     }
     glfwMakeContextCurrent(window);
     glfwMaximizeWindow(window);
-    glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(0); // Enable vsync
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))  // tie window context to glad's opengl funcs
         throw("Unable to context to OpenGL");
@@ -96,8 +94,6 @@ bool EliseApp::init() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    viewport.init(500, 500);
-
     waveform_viewer.key_frame_creation_callback = [this](float arg){key_frame_creation_callback(arg);};
     waveform_viewer.key_frame_deletion_callback = [this](int arg){key_frame_deletion_callback(arg);};
     waveform_viewer.key_frame_drag_callback = [this](int arg, int64_t arg2){key_frame_drag_callback(arg, arg2);};
@@ -106,15 +102,18 @@ bool EliseApp::init() {
     init_groups();
     init_light_manager();
 
+    renderer.InitRenderer(1000, 500);
+
     return true;
 }
 
 void EliseApp::mainloop() {
     while (!glfwWindowShouldClose(window)) {
+
+
         glfwPollEvents();
 
         update();
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -141,8 +140,14 @@ void EliseApp::mainloop() {
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-
         glfwSwapBuffers(window);
+
+        if (is_exporting) {
+            for (int i = 0; i < 5; ++i) {
+                update_export();
+            }
+        }
+
     }
 }
 
@@ -247,14 +252,18 @@ void EliseApp::compile_commands() {
 }
 
 void EliseApp::draw() {
-    ImGui::BeginDisabled(is_dialog_opened);
 
-    draw_menu_bar();
-    draw_player();
-    draw_keyframe_edition_window();
-    draw_command_edition_window();
-    waveform_viewer.draw();
-    viewport.draw();
+    ImGui::BeginDisabled(is_dialog_opened | is_exporting);
+
+    if (!is_exporting) {
+        draw_menu_bar();
+        draw_player();
+        draw_keyframe_edition_window();
+        draw_command_edition_window();
+        waveform_viewer.draw();
+        draw_viewport();
+    }
+
 
     // Notifications style setup
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f); // Disable round borders
@@ -275,6 +284,41 @@ void EliseApp::draw() {
     ImGui::PopStyleColor(1);
 
     ImGui::EndDisabled();
+
+    if (is_exporting) {
+        draw_export_pop_up();
+    }
+}
+
+void EliseApp::draw_export_pop_up() {
+    // Get the main viewport size and position
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Desired window size (optional, define your own size)
+    ImVec2 window_size = ImVec2(200, 100); // Adjust size as needed
+    ImVec2 window_pos = ImVec2(
+        viewport->Pos.x + (viewport->Size.x - window_size.x) * 0.5f,
+        viewport->Pos.y + (viewport->Size.y - window_size.y) * 0.5f
+    );
+
+    // Set the position and size *before* Begin
+    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+
+    auto popup_flag = ImGuiWindowFlags_NoDocking
+    | ImGuiWindowFlags_NoTitleBar
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoMove;
+
+    ImGui::Begin("Export popup", nullptr, popup_flag);
+    ImGui::Text("Exporting :");
+    float progress = float(current_frame) / float(max_frame);
+    ImGui::ProgressBar(progress);
+    ImGui::End();
+
+    ImGui::PopStyleColor();
 }
 
 void EliseApp::draw_menu_bar() {
@@ -287,7 +331,8 @@ void EliseApp::draw_menu_bar() {
             ImGui::EndDisabled();
             if (ImGui::MenuItem("Save as")) on_save_as();
             ImGui::Separator();
-            if (ImGui::MenuItem("Export")) on_export();
+            if (ImGui::MenuItem("Export script")) on_export();
+            if (ImGui::MenuItem("Export video")) on_export_video();
 
             ImGui::EndMenu();
         }
@@ -332,13 +377,38 @@ void EliseApp::draw_player() {
             play_audio();
         }
 
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Text("Sample rate: %i /s", sample_rate);
+
     }
 
     ImGui::End();
 }
 
 void EliseApp::draw_viewport() {
-    viewport.draw();
+    ImGui::Begin("Preview");
+    static int m_width, m_height = 1;
+    int width = ImGui::GetContentRegionAvail().x;
+    int height = ImGui::GetContentRegionAvail().y;
+
+    if (m_width != width || m_height != height) {
+        m_width = width;
+        m_height = height;
+    }
+    renderer.setViewport(m_width, m_height);
+
+    auto& colors = light_manager.getLightStates();
+    std::array<glm::vec4, 12> arr_colors;
+    for (int i = 0; i < 12; ++i) {
+        auto& color = colors[i];
+        arr_colors.at(i) = {color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f};
+    }
+
+    if (!is_exporting) renderer.Render(arr_colors);
+
+    ImGui::Image(renderer.GetTexture(), ImVec2((float)m_width, (float)m_height), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
 }
 
 void EliseApp::draw_keyframe_edition_window() {
@@ -550,8 +620,6 @@ void EliseApp::draw_command_edition_window() {
 }
 
 void EliseApp::handle_input() {
-    ImGuiIO& io = ImGui::GetIO();
-
     if (ImGui::IsKeyPressed(ImGuiKey_Space, false)) {
         if (audio_manager.isPlaying()) {
             stop_audio();
@@ -571,7 +639,6 @@ void EliseApp::update() {
     handle_input();
     update_waveform_viewer();
     update_light_manager();
-    update_viewport();
 }
 
 void EliseApp::update_waveform_viewer() {
@@ -582,15 +649,9 @@ void EliseApp::update_waveform_viewer() {
 }
 
 void EliseApp::update_light_manager() {
-    if (audio_manager.isPlaying()) {
+    if (audio_manager.isPlaying() && !is_exporting) {
         auto pos = audio_manager.getPlayheadPosition();
         light_manager.update(pos);
-    }
-}
-
-void EliseApp::update_viewport() {
-    if (audio_manager.isPlaying()) {
-        viewport.setColors(light_manager.getLightStates());
     }
 }
 
@@ -715,6 +776,15 @@ void EliseApp::on_load_song() {
     is_load_song_dialog_active = true;
 }
 
+void EliseApp::on_export_video() {
+    export_video_dialog = std::make_unique<pfd::save_file>(
+        "Export project to video",
+        "",
+        std::vector<std::string>{"MP4 file", "*.mp4"},
+        pfd::opt::none);
+    is_export_video_dialog_active = true;
+}
+
 
 void EliseApp::save_project(const std::string &path) {
 
@@ -734,17 +804,34 @@ void EliseApp::save_project(const std::string &path) {
 }
 
 void EliseApp::load_project(const std::string &path) {
-    ProjectData p = load(path);
-    keyframes = p.keyframes;
-    groups = p.groups;
-    keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
-    light_count = p.light_count;
-    max_keyframe_uuid = p.max_uuid;
+    ProjectData p;
+    bool error = false;
 
-    order_keyframes();
-    update_keyframes();
-    is_loaded_from_file = true;
-    filepath = path;
+    try {
+        p = load(path);
+    } catch (const std::exception &e) {
+        ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Not a valid ELISE file !"});
+        error = true;
+    }
+
+    if (!error) {
+        keyframes = p.keyframes;
+        groups = p.groups;
+        keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
+        light_count = p.light_count;
+        max_keyframe_uuid = p.max_uuid;
+
+        order_keyframes();
+        update_keyframes();
+        is_loaded_from_file = true;
+        filepath = path;
+
+        ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project was loaded !"});
+    }
+
+
+
+
 }
 
 void EliseApp::export_project(const std::string &path) {
@@ -811,7 +898,21 @@ void EliseApp::update_dialogs() {
         is_export_project_dialog_active = false;
     } else if (not export_project_dialog) is_export_project_dialog_active = false;
 
-    is_dialog_opened = is_open_project_dialog_active || is_load_song_dialog_active || is_save_project_dialog_active || is_export_project_dialog_active;
+    if (export_video_dialog && export_video_dialog->ready()) {
+        auto filename = export_video_dialog->result();
+        if(filename.length() > 0) {
+            filename = ensure_extension(filename, ".mp4");
+            start_export(filename);
+        }
+        export_video_dialog.reset();
+        is_export_video_dialog_active = false;
+    }
+
+    is_dialog_opened = is_open_project_dialog_active
+                        || is_load_song_dialog_active
+                        || is_save_project_dialog_active
+                        || is_export_project_dialog_active
+                        || is_export_video_dialog_active;
 }
 
 void EliseApp::copy_color(const Color &color) {
@@ -861,25 +962,58 @@ void EliseApp::color_picker(const char *label, Color &color) {
     ImGui::PopID();
 }
 
-void EliseApp::export_video(const std::string &path) {
+void EliseApp::start_export(const std::string &path) {
+    stop_audio();
+
     is_exporting = true;
+
+    order_keyframes();
+
+    auto last_k = keyframes.back();
 
     compile_commands();
 
-    int frame = 0;
-    int sample = 0;
-    int max_samples = sample_count;
+    encoder = new MP4Encoder(path, 750, 370, export_framerate, sample_rate);
+    encoder->addAudio(audio_manager.getOriginalSamples());
+    current_frame = 0;
 
-    while (sample < max_samples) {
-        light_manager.updateAnimations(sample);
-        light_manager.updateLightStates(sample);
-        auto lights = light_manager.getLightStates();
+    max_frame = (last_k.trigger_sample * export_framerate / sample_rate) - 1;
+}
 
-        frame++;
+void EliseApp::export_frame() {
+    if (!is_exporting) return;
+
+    int current_sample = current_frame * sample_rate / export_framerate;
+
+    renderer.setViewport(750, 370);
+    light_manager.updateAnimations(current_sample);
+    light_manager.updateLightStates(current_sample);
+
+    auto lights = light_manager.getLightStates();
+
+    auto vec_light = std::array<glm::vec4, 12>{};
+    int i = 0;
+    for (auto light: lights) {
+        vec_light.at(i) = {light.r / 255.f, light.g / 255.f, light.b / 255.f, light.a / 255.f};
+        i++;
     }
 
+    renderer.Render(vec_light);
+    encoder->addOpenGLFrame(renderer.GetFboOut());
+}
 
+void EliseApp::update_export() {
+    if (!is_exporting) return;
+    if (current_frame < max_frame) {
+        export_frame();
+        current_frame++;
+    }
+    else {
+        is_exporting = false;
+        encoder->finalize();
+        delete encoder;
 
-    is_exporting = false;
+        ImGui::InsertNotification({ImGuiToastType::Success, 5000, "Video exported !"});
+    }
 }
 
