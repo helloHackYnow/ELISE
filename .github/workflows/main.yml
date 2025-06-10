@@ -28,7 +28,9 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Debug Build Directory
-        run: dir build\Release
+        run: |
+          dir build\Release
+          dir build\ffmpeg\bin
 
       - name: Package binaries
         run: |
@@ -43,6 +45,12 @@ jobs:
       - name: Bundle release files into ZIP
         run: Compress-Archive -Path dist\* -DestinationPath ELISE.zip
 
+      - name: Verify ZIP file
+        run: |
+          if (!(Test-Path -Path ELISE.zip)) {
+            Write-Error "Release ZIP file not found!"
+            exit 1
+          }
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -50,3 +58,4 @@ jobs:
           files: ELISE.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
