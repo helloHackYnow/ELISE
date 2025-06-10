@@ -104,7 +104,7 @@ endfunction()
 # Force static linking for the entire project
 if(WIN32)
     # Use static runtime
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
     # Static linking flags
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL:NO")
