@@ -41,7 +41,7 @@ bool EliseApp::init() {
     }
     glfwMakeContextCurrent(window);
     glfwMaximizeWindow(window);
-    glfwSwapInterval(0); // Enable vsync
+    glfwSwapInterval(1); // Enable vsync
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))  // tie window context to glad's opengl funcs
         throw("Unable to context to OpenGL");
