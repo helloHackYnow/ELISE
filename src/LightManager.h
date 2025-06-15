@@ -148,6 +148,7 @@ struct Keyframe {
     int64_t uuid = -1;
     bool is_locked = false;
     bool is_enabled = true;
+    bool highlighted = true;
 };
 
 inline bool compare(const Keyframe& a, const Keyframe& b) {

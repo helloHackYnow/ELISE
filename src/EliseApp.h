@@ -74,11 +74,13 @@ private:
 
 
     // Callback
-    void key_frame_creation_callback(int64_t sample);
-    void key_frame_deletion_callback(int64_t keyframe_uuid);
+    void keyframe_creation_callback(int64_t sample);
+    void keyframe_deletion_callback();
     // New sample: sample the keyframe has been displaced to
-    void key_frame_drag_callback(int64_t keyframe_uuid, int64_t new_sample);
-    void key_frame_selection_callback(int64_t keyframe_uuid);
+    void keyframe_drag_callback(int64_t delta);
+    void keyframe_selection_callback(int64_t keyframe_uuid);
+    void reset_selection_callback();
+    void keyframe_unselection_callback(int64_t keyframe_uuid);
 
     void update_keyframes();
 
@@ -131,7 +133,7 @@ private:
     // Keyframes
     std::vector<Keyframe> keyframes;
     std::map<int64_t, int> keyframe_uuid_to_index;
-    int64_t selected_keyframe_uuid = -1;
+    std::set<int64_t> selected_keyframes;
     int64_t max_keyframe_uuid = 0;
     bool is_keyframe_edition_window_visible = true;
 

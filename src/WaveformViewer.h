@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <functional>
+#include <set>
 #include <vector>
 
 #include "imgui.h"
@@ -17,10 +18,13 @@
 
 class WaveformViewer {
 public:
-    std::function<void(int64_t)> key_frame_creation_callback = nullptr;
-    std::function<void(int64_t)> key_frame_deletion_callback = nullptr;
-    std::function<void(int64_t, int64_t)> key_frame_drag_callback = nullptr;
-    std::function<void(int64_t)> key_frame_selection_callback = nullptr;
+    std::function<void(int64_t)> keyframe_creation_callback = nullptr;
+    std::function<void()> keyframe_deletion_callback = nullptr;
+    std::function<void(int64_t)> keyframe_drag_callback = nullptr;
+    std::function<void(int64_t)> keyframe_selection_callback = nullptr;
+
+    std::function<void(int64_t)> keyframe_unselection_callback = nullptr;
+    std::function<void()> reset_selection_callback = nullptr;
 
 private:
     std::vector<float> waveform_data;
@@ -31,7 +35,7 @@ private:
     float cursor_position = 0.0f; // Sample
 
     std::vector<Keyframe> keyframes;
-    int64_t selected_keyframe_uuid = -1;
+    std::set<int64_t> selected_keyframes;
     int selected_keyframe_index = -1;
     bool dragging_cursor = false;
     bool dragging_keyframe = false;
@@ -110,7 +114,7 @@ public:
     void set_waveform_data(const std::vector<float>& waveform_data);
 
     void set_keyframes(const std::vector<Keyframe>& keyframes);
-    void set_selected_keyframe(int64_t keyframe_index);
+    void set_selected_keyframe(const std::set<int64_t>& selected_keyframes_uuid);
 
     void set_gradient_preview(int64_t start, int64_t duration);
 };

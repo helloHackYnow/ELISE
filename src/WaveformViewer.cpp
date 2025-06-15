@@ -217,12 +217,8 @@ void WaveformViewer::drawCursor(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2
 void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImVec2 canvas_size) {
 
     selected_keyframe_index = -1;
-
     for (int i = 0; i < keyframes.size(); ++i) {
         float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
-
-        // Update selected keyframe index
-        if (keyframes[i].uuid == selected_keyframe_uuid) selected_keyframe_index = i;
 
         // Draw keyframe handle at top (larger, easier to click)
         static ImVec2 rect_size{5, 10};
@@ -239,7 +235,9 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
             if (!keyframes[i].is_enabled) color = disabled_color;
             else if (keyframes[i].is_locked) color = locked_color;
 
-            if (keyframes[i].uuid == selected_keyframe_uuid) {
+            if (selected_keyframes.contains(keyframes[i].uuid)) {
+                selected_keyframe_index = i;
+
                 static const ImU32 halo_colors[] = {
                     IM_COL32(100, 150, 255, 60),  // Outer (most transparent)
                     IM_COL32(100, 150, 255, 100), // Middle
@@ -317,8 +315,7 @@ void WaveformViewer::drawGradientPreview(ImDrawList* draw_list, ImVec2 canvas_po
 
 void WaveformViewer::drawSelectedKeyFrameTimestamp(ImDrawList* draw_list, ImVec2 canvas_pos, ImVec2 canvas_size)
 {
-    if (selected_keyframe_uuid >= 0)
-    {
+    if (selected_keyframes.size() == 1 && selected_keyframe_index >= 0) {
         // Get the on-screen position
         float keyframe_x = sampleToPixel(keyframes[selected_keyframe_index].trigger_sample, canvas_size.x);
 
@@ -442,41 +439,6 @@ void WaveformViewer::drawDebugWindow() {
 
         ImGui::Separator();
         ImGui::Text("Audio Processing:");
-    /*
-        if (ImGui::Button("Load MP3")) {
-            // You can implement a file dialog here or hardcode a path
-            if (audio_processor.loadMP3("ressources/le_z.mp3")) {
-                waveform_data = show_filtered ?
-                    audio_processor.getFilteredSamples() :
-                    audio_processor.getOriginalSamples();
-            }
-            // Calculate initial envelope
-            computeEnvelope();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Apply Low-Pass Filter")) {
-            audio_processor.applyLowPassFilter(500.0f); // 500Hz cutoff
-            if (show_filtered) {
-                waveform_data = audio_processor.getFilteredSamples();
-            }
-        }
-
-        if (ImGui::Checkbox("Show Filtered", &show_filtered)) {
-            if (!audio_processor.getOriginalSamples().empty()) {
-                waveform_data = show_filtered ?
-                    audio_processor.getFilteredSamples() :
-                    audio_processor.getOriginalSamples();
-            }
-        }
-
-        static float cutoff_freq = 500.0f;
-        if (ImGui::SliderFloat("Cutoff Frequency", &cutoff_freq, 50.0f, 2000.0f)) {
-            audio_processor.applyLowPassFilter(cutoff_freq);
-            if (show_filtered) {
-                waveform_data = audio_processor.getFilteredSamples();
-            }
-        }
-        */
 
         ImGui::Separator();
         ImGui::Text("Envelope Visualization:");
@@ -546,23 +508,66 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             float mouse_x = mouse_pos.x - canvas_pos.x;
 
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                // Check if clicking on keyframe handle
-                selected_keyframe_uuid = -1;
-                float mouse_y = mouse_pos.y - canvas_pos.y;
 
+                // Check if clicking on keyframe handle
+                float mouse_y = mouse_pos.y - canvas_pos.y;
+                bool clicked = false;
                 for (int i = 0; i < keyframes.size(); ++i) {
                     float keyframe_x = sampleToPixel(keyframes[i].trigger_sample, canvas_size.x);
                     // Check if clicking on the handle (top 20 pixels)
                     if (abs(mouse_x - keyframe_x) < 8.0f && mouse_y < 20.0f) {
-                        selected_keyframe_uuid = keyframes[i].uuid;
-                        key_frame_selection_callback(selected_keyframe_uuid);
+
+                        if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
+                            if (!selected_keyframes.contains(keyframes[i].uuid)) {
+                                keyframe_selection_callback(keyframes[i].uuid);
+                                selected_keyframes.insert(keyframes[i].uuid);
+                            } else {
+                                keyframe_unselection_callback(keyframes[i].uuid);
+                                selected_keyframes.erase(keyframes[i].uuid);
+                            }
+                        } else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
+
+                            if (selected_keyframes.size() != 1) {
+                                reset_selection_callback();
+                                selected_keyframes.clear();
+
+                                keyframe_selection_callback(keyframes[i].uuid);
+                                selected_keyframes.insert(keyframes[i].uuid);
+                            } else {
+                                keyframe_selection_callback(keyframes[i].uuid);
+                                selected_keyframes.insert(keyframes[i].uuid);
+
+                                auto a = keyframes[selected_keyframe_index].trigger_sample;
+                                auto b = keyframes[i].trigger_sample;
+
+                                auto start = std::min(a, b);
+                                auto end = std::max(a, b);
+
+                                for (auto & keyframe: keyframes) {
+                                    if (start < keyframe.trigger_sample && keyframe.trigger_sample < end) {
+                                        keyframe_selection_callback(keyframe.uuid);
+                                        selected_keyframes.insert(keyframe.uuid);
+                                    }
+                                }
+                            }
+
+                        } else {
+                            reset_selection_callback();
+                            selected_keyframes.clear();
+
+                            keyframe_selection_callback(keyframes[i].uuid);
+                            selected_keyframes.insert(keyframes[i].uuid);
+                        }
+
                         dragging_keyframe = true;
+                        clicked = true;
                         break;
                     }
                 }
 
-                if (selected_keyframe_uuid == -1) {
+                if (!clicked) {
                     // Move cursor
+                    reset_selection_callback();
                     cursor_position = pixelToSample(mouse_x, canvas_size.x);
                     cursor_position = std::clamp(cursor_position, 0.0f, (float)waveform_data.size());
                     dragging_cursor = true;
@@ -570,8 +575,10 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                if (dragging_keyframe && selected_keyframe_uuid >= 0) {
-                    key_frame_drag_callback(selected_keyframe_uuid, int(pixelToSample(mouse_x, canvas_size.x)));
+                if (dragging_keyframe && selected_keyframes.size() > 0) {
+                    auto delta = io.MouseDelta.x;
+                    keyframe_drag_callback(pixelToSample(delta, canvas_size.x) - horizontal_offset);
+
                 } else if (dragging_cursor) {
                     cursor_position = pixelToSample(mouse_x, canvas_size.x);
                     cursor_position = std::clamp(cursor_position, 0.0f, (float)waveform_data.size());
@@ -599,15 +606,13 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (!exists) {
-                key_frame_creation_callback(cursor_position);
-                selected_keyframe_uuid = -1;
+                keyframe_creation_callback(cursor_position);
             }
         }
 
         // Handle Delete key for removing selected keyframe
-        if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Delete) && selected_keyframe_uuid >= 0) {
-            key_frame_deletion_callback(selected_keyframe_uuid);
-            selected_keyframe_uuid = -1;
+        if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Delete) && selected_keyframes.size() > 0) {
+            keyframe_deletion_callback();
         }
 }
 
@@ -770,8 +775,8 @@ void WaveformViewer::set_keyframes(const std::vector<Keyframe>& keyframes) {
     this->keyframes = keyframes;
 }
 
-void WaveformViewer::set_selected_keyframe(int64_t keyframe) {
-    selected_keyframe_uuid = keyframe;
+void WaveformViewer::set_selected_keyframe(const std::set<int64_t> &selected_keyframes_uuid) {
+    selected_keyframes = selected_keyframes_uuid;
 }
 
 void WaveformViewer::set_gradient_preview(int64_t start, int64_t duration)

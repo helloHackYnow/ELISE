@@ -98,10 +98,12 @@ bool EliseApp::init() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    waveform_viewer.key_frame_creation_callback = [this](float arg){key_frame_creation_callback(arg);};
-    waveform_viewer.key_frame_deletion_callback = [this](int arg){key_frame_deletion_callback(arg);};
-    waveform_viewer.key_frame_drag_callback = [this](int arg, int64_t arg2){key_frame_drag_callback(arg, arg2);};
-    waveform_viewer.key_frame_selection_callback = [this](int arg){key_frame_selection_callback(arg);};
+    waveform_viewer.keyframe_creation_callback      = [this](float arg){keyframe_creation_callback(arg);};
+    waveform_viewer.keyframe_deletion_callback      = [this](){keyframe_deletion_callback();};
+    waveform_viewer.keyframe_drag_callback          = [this](int64_t arg2){keyframe_drag_callback(arg2);};
+    waveform_viewer.keyframe_selection_callback     = [this](int arg){keyframe_selection_callback(arg);};
+    waveform_viewer.reset_selection_callback        = [this](){reset_selection_callback();};
+    waveform_viewer.keyframe_unselection_callback   = [this](int arg){keyframe_unselection_callback(arg);};
 
     init_groups();
     init_light_manager();
@@ -421,12 +423,78 @@ void EliseApp::draw_keyframe_edition_window() {
         ImGui::Text("Keyframe");
 
         ImGui::Separator();
-       
 
-        if (selected_keyframe_uuid >= 0) {
+        if (selected_keyframes.empty()) {
+            ImGui::BeginDisabled();
+            ImGui::Text("No keyframe selected");
+            ImGui::EndDisabled();
+        } else if (selected_keyframes.size() > 1) {
+            ImGui::BeginDisabled();
+            ImGui::Text("Multiple keyframes selected");
+            ImGui::EndDisabled();
+
+            int are_locked = -1; // -1: start value, 0: all locked, 1: all unlocked, 2: mixed
+            int are_enabled = -1; // -1: start value, 0: all enabled, 1: all disabled, 2: mixed
+            for (int64_t selected_keyframe: selected_keyframes) {
+                auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+
+                if (keyframe.is_locked) {
+                    if (are_locked == -1 || are_locked == 0) are_locked = 0;
+                    else are_locked = 2;
+                } else {
+                    if (are_locked == -1 || are_locked == 1) are_locked = 1;
+                    else are_locked = 2;
+                }
+
+                if (keyframe.is_enabled) {
+                    if (are_enabled == -1 || are_enabled == 0) are_enabled = 0;
+                    else are_enabled = 2;
+                } else {
+                    if (are_enabled == -1 || are_enabled == 1) are_enabled = 1;
+                    else are_enabled = 2;
+                }
+            }
+
+            if (are_locked != 1)
+            {
+                if (ImGui::Button((const char*)u8"\uf023"))
+                {
+                    for (int64_t selected_keyframe: selected_keyframes) {
+                        auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                        keyframe.is_locked = false;
+                    }
+                    update_keyframes();
+                }
+            }
+            else
+            {
+                if (ImGui::Button((const char*)u8"\uf3c1"))
+                {
+                    for (int64_t selected_keyframe: selected_keyframes) {
+                        auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                        keyframe.is_locked = true;
+                    }
+                    update_keyframes();
+                }
+            }
+
+            ImGui::SameLine();
+
+            bool enabled = are_enabled == 0;
+            if (ImGui::Checkbox("Enabled", &enabled)) {
+                for (int64_t selected_keyframe: selected_keyframes) {
+                    auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                    keyframe.is_enabled = enabled;
+                }
+                update_keyframes();
+            }
+
+
+        } else {
             std::vector<std::string> commands_str;
             std::vector<const char*> listbox_buff;
 
+            auto selected_keyframe_uuid = *selected_keyframes.begin();
             auto& keyframe = keyframes.at(keyframe_uuid_to_index.at(selected_keyframe_uuid));
 
             auto& commands = keyframe_uuid_to_commands[selected_keyframe_uuid];
@@ -474,12 +542,7 @@ void EliseApp::draw_keyframe_edition_window() {
 
             ImGui::EndDisabled();
 
-        } else {
-            ImGui::BeginDisabled();
-            ImGui::Text("No keyframe selected");
-            ImGui::EndDisabled();
         }
-
 
     }
     ImGui::End();
@@ -487,14 +550,17 @@ void EliseApp::draw_keyframe_edition_window() {
 
 void EliseApp::draw_command_edition_window() {
     if (ImGui::Begin("Command", &is_command_edition_window_visible)) {
-        if (selected_keyframe_uuid < 0
-            || selected_command < 0
-            || selected_command >= keyframe_uuid_to_commands[selected_keyframe_uuid].size()) {
+        if (selected_keyframes.empty()) {
             ImGui::BeginDisabled();
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
+        } else if (selected_keyframes.size() > 1) {
+            ImGui::BeginDisabled();
+            ImGui::Text("Multiple keyframes selected");
+            ImGui::EndDisabled();
         } else {
             ImGui::Spacing();
+            auto selected_keyframe_uuid = *selected_keyframes.begin();
             auto& command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
             auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe_uuid]);
 
@@ -644,6 +710,8 @@ void EliseApp::update() {
     handle_input();
     update_waveform_viewer();
     update_light_manager();
+
+    waveform_viewer.set_selected_keyframe(selected_keyframes);
 }
 
 void EliseApp::update_waveform_viewer() {
@@ -682,7 +750,7 @@ void EliseApp::build_keyframe_uuid_to_index_map() {
     }
 }
 
-void EliseApp::key_frame_creation_callback(int64_t sample) {
+void EliseApp::keyframe_creation_callback(int64_t sample) {
     max_keyframe_uuid++;
     keyframes.push_back(Keyframe{sample, max_keyframe_uuid});
 
@@ -692,36 +760,60 @@ void EliseApp::key_frame_creation_callback(int64_t sample) {
     order_keyframes();
     update_keyframes();
 
-    waveform_viewer.set_selected_keyframe(max_keyframe_uuid);
-    selected_keyframe_uuid = max_keyframe_uuid;
+    waveform_viewer.set_selected_keyframe(selected_keyframes);
+    selected_keyframes.clear();
+    selected_keyframes.insert(selected_keyframes.begin(), max_keyframe_uuid);
     selected_command = 0;
 }
 
-void EliseApp::key_frame_deletion_callback(int64_t keyframe_uuid) {
-    auto index = keyframe_uuid_to_index[keyframe_uuid];
+void EliseApp::keyframe_deletion_callback() {
 
-    keyframes.erase(keyframes.begin() + index);
-    keyframe_uuid_to_commands.erase(keyframe_uuid);
-    build_keyframe_uuid_to_index_map();
-
-    update_keyframes();
-    selected_keyframe_uuid = -1;
-}
-
-
-void EliseApp::key_frame_drag_callback(int64_t keyframe_uuid, int64_t new_sample) {
-    auto& keyframe = keyframes[keyframe_uuid_to_index[keyframe_uuid]];
-
-    if (!keyframe.is_locked) {
-        keyframe.trigger_sample = new_sample;
-        for (auto& command : keyframe_uuid_to_commands[selected_keyframe_uuid]) { retimeCommand(command, new_sample); }
-        order_keyframes();
-        update_keyframes();
+    // Build the list of index to delete
+    std::vector<int> to_delete;
+    to_delete.reserve(selected_keyframes.size());
+    for (int64_t selected_keyframe: selected_keyframes) {
+        to_delete.push_back(keyframe_uuid_to_index[selected_keyframe]);
+        keyframe_uuid_to_index.erase(selected_keyframe);
     }
+    std::sort(to_delete.begin(), to_delete.end());
+    std::reverse(to_delete.begin(), to_delete.end());
+
+    for (int keyframe_index: to_delete) {
+        keyframes.erase(keyframes.begin() + keyframe_index);
+    }
+
+    build_keyframe_uuid_to_index_map();
+    update_keyframes();
+    selected_keyframes.clear();
 }
 
-void EliseApp::key_frame_selection_callback(int64_t keyframe_uuid) {
-    selected_keyframe_uuid = keyframe_uuid;
+void EliseApp::keyframe_drag_callback(int64_t delta_sample) {
+    // Check if one of the selected keyframe is locked
+    for (int64_t selected_keyframe: selected_keyframes) {
+        if (keyframes.at(keyframe_uuid_to_index[selected_keyframe]).is_locked) return;
+    }
+
+    for (int64_t selected_keyframe: selected_keyframes) {
+        auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe]);
+        keyframe.trigger_sample += delta_sample;
+
+        for (auto& command : keyframe_uuid_to_commands[selected_keyframe]) { retimeCommand(command, keyframe.trigger_sample); }
+    }
+
+    order_keyframes();
+    update_keyframes();
+}
+
+void EliseApp::keyframe_selection_callback(int64_t keyframe_uuid) {
+    selected_keyframes.insert(keyframe_uuid);
+}
+
+void EliseApp::reset_selection_callback() {
+    selected_keyframes.clear();
+}
+
+void EliseApp::keyframe_unselection_callback(int64_t keyframe_uuid) {
+    selected_keyframes.erase(keyframe_uuid);
 }
 
 void EliseApp::update_keyframes() {
