@@ -347,7 +347,6 @@ void EliseApp::draw_menu_bar() {
             if (ImGui::MenuItem("Exit")) {
                 glfwSetWindowShouldClose(window, true);
             }
-            ImGui::MenuItem("\uE14D");
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
