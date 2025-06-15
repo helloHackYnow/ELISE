@@ -89,7 +89,7 @@ void MP4Encoder::initAudioStream() {
     av_channel_layout_default(&_audioCtx->ch_layout, 1);
 
     _audioCtx->sample_fmt = codec->sample_fmts[0]; // e.g. AV_SAMPLE_FMT_FLTP
-    _audioCtx->bit_rate = 128000;
+    _audioCtx->bit_rate = 128000*2;
     _audioCtx->time_base = AVRational{1, _sampleRate};
     if (_fmtCtx->oformat->flags & AVFMT_GLOBALHEADER)
         _audioCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;

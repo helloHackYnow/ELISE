@@ -1002,7 +1002,7 @@ void EliseApp::start_export(const std::string &path) {
     encoder->addAudio(audio_manager.getOriginalSamples());
     current_frame = 0;
 
-    max_frame = (last_k.trigger_sample * export_framerate / sample_rate) - 1;
+    max_frame = (last_k.trigger_sample * export_framerate / sample_rate);
 }
 
 void EliseApp::export_frame() {
