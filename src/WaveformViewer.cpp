@@ -224,28 +224,56 @@ void WaveformViewer::drawKeyframes(ImDrawList *draw_list, ImVec2 canvas_pos, ImV
         // Update selected keyframe index
         if (keyframes[i].uuid == selected_keyframe_uuid) selected_keyframe_index = i;
 
+        // Draw keyframe handle at top (larger, easier to click)
+        static ImVec2 rect_size{5, 10};
+        static float rec_rounding = 5.f;
+        ImVec2 handle_center = ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + rect_size.y + 2);
+
+        static ImU32 disabled_color = IM_COL32(120, 120, 120, 255);
+        static ImU32 locked_color   = IM_COL32(255, 100, 120, 255);
+        static ImU32 default_color   = IM_COL32(255, 200, 100, 255);
+
         if (keyframe_x >= -10 && keyframe_x <= canvas_size.x + 10) {
 
-            ImU32 line_color = keyframes[i].is_locked 
-                ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
-                ? IM_COL32(255, 100, 120, 255) : IM_COL32(255, 200, 100, 255);
+            ImU32 color = default_color;
+            if (!keyframes[i].is_enabled) color = disabled_color;
+            else if (keyframes[i].is_locked) color = locked_color;
 
-            ImU32 handle_color = !(keyframes[i].is_enabled)
-                ? IM_COL32(120, 120, 120, 255) : (keyframes[i].uuid == selected_keyframe_uuid)
-                ? IM_COL32(255, 100, 100, 255) :  IM_COL32(255, 200, 100, 255);
+            if (keyframes[i].uuid == selected_keyframe_uuid) {
+                static const ImU32 halo_colors[] = {
+                    IM_COL32(100, 150, 255, 60),  // Outer (most transparent)
+                    IM_COL32(100, 150, 255, 100), // Middle
+                    IM_COL32(100, 150, 255, 140)  // Inner (most opaque)
+                };
+                static const float halo_sizes[] = {4.0f, 2.5f, 1.5f};
+
+                // Draw multiple layers for smoother glow
+                for (int layer = 0; layer < 3; ++layer) {
+                    draw_list->AddRectFilled(
+                        ImVec2(handle_center.x - rect_size.x - halo_sizes[layer],
+                               handle_center.y - rect_size.y - halo_sizes[layer]),
+                        ImVec2(handle_center.x + rect_size.x + halo_sizes[layer],
+                               handle_center.y + rect_size.y + halo_sizes[layer]),
+                        halo_colors[layer], rec_rounding + halo_sizes[layer]);
+
+                    draw_list->AddRectFilled(
+                        ImVec2(canvas_pos.x + keyframe_x - halo_sizes[layer],
+                               canvas_pos.y + 15 - halo_sizes[layer]),
+                        ImVec2(canvas_pos.x + keyframe_x + halo_sizes[layer],
+                               canvas_pos.y + canvas_size.y + halo_sizes[layer]),
+                        halo_colors[layer], rec_rounding + halo_sizes[layer]);
+                }
+            }
 
             // Draw keyframe line
             draw_list->AddLine(ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + 15),
                              ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + canvas_size.y),
-                             line_color, 1.5f);
+                             color, 1.5f);
 
-            // Draw keyframe handle at top (larger, easier to click)
-            static ImVec2 rect_size{5, 10};
-            static float rec_rounding = 5.f;
-            ImVec2 handle_center = ImVec2(canvas_pos.x + keyframe_x, canvas_pos.y + rect_size.y + 2);
             draw_list->AddRectFilled(ImVec2(handle_center.x - rect_size.x, handle_center.y - rect_size.y),
                                    ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
-                                   handle_color, rec_rounding);
+                                   color, rec_rounding);
+
             draw_list->AddRect(ImVec2(handle_center.x - rect_size.x, handle_center.y - rect_size.y),
                              ImVec2(handle_center.x + rect_size.x, handle_center.y + rect_size.y),
                              IM_COL32(0, 0, 0, 150), rec_rounding, 0, 1.0f);
