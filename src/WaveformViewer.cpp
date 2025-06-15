@@ -552,8 +552,13 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                             }
 
                         } else {
-                            keyframe_selection_callback(keyframes[i].uuid);
-                            selected_keyframes.insert(keyframes[i].uuid);
+                            if (!selected_keyframes.contains(keyframes[i].uuid)) {
+                                reset_selection_callback();
+                                selected_keyframes.clear();
+
+                                keyframe_selection_callback(keyframes[i].uuid);
+                                selected_keyframes.insert(keyframes[i].uuid);
+                            }
                         }
 
                         dragging_keyframe = true;
