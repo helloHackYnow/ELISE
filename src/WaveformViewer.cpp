@@ -552,9 +552,6 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
                             }
 
                         } else {
-                            reset_selection_callback();
-                            selected_keyframes.clear();
-
                             keyframe_selection_callback(keyframes[i].uuid);
                             selected_keyframes.insert(keyframes[i].uuid);
                         }
@@ -575,7 +572,7 @@ void WaveformViewer::handleInput(ImVec2 canvas_pos, ImVec2 canvas_size) {
             }
 
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-                if (dragging_keyframe && selected_keyframes.size() > 0) {
+                if (dragging_keyframe && !selected_keyframes.empty()) {
                     auto delta = io.MouseDelta.x;
                     keyframe_drag_callback(pixelToSample(delta, canvas_size.x) - horizontal_offset);
 
