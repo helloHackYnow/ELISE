@@ -806,7 +806,11 @@ void EliseApp::keyframe_drag_callback(int64_t delta_sample) {
 
 void EliseApp::keyframe_selection_callback(int64_t keyframe_uuid) {
     selected_keyframes.insert(keyframe_uuid);
-    selected_command = -1;
+
+    if (selected_keyframes.size() == 1) {
+        auto& commands = keyframe_uuid_to_commands.at(*selected_keyframes.begin());
+        selected_command = std::min(int(commands.size()-1), selected_command);
+    }
 }
 void EliseApp::reset_selection_callback() {
     selected_keyframes.clear();
@@ -814,6 +818,11 @@ void EliseApp::reset_selection_callback() {
 
 void EliseApp::keyframe_unselection_callback(int64_t keyframe_uuid) {
     selected_keyframes.erase(keyframe_uuid);
+
+    if (selected_keyframes.size() == 1) {
+        auto& commands = keyframe_uuid_to_commands.at(*selected_keyframes.begin());
+        selected_command = std::min(int(commands.size()-1), selected_command);
+    }
 }
 
 void EliseApp::update_keyframes() {
