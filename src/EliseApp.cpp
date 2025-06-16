@@ -550,7 +550,7 @@ void EliseApp::draw_keyframe_edition_window() {
 
 void EliseApp::draw_command_edition_window() {
     if (ImGui::Begin("Command", &is_command_edition_window_visible)) {
-        if (selected_keyframes.empty()) {
+        if (selected_keyframes.empty() || selected_command < 0) {
             ImGui::BeginDisabled();
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
@@ -806,8 +806,8 @@ void EliseApp::keyframe_drag_callback(int64_t delta_sample) {
 
 void EliseApp::keyframe_selection_callback(int64_t keyframe_uuid) {
     selected_keyframes.insert(keyframe_uuid);
+    selected_command = -1;
 }
-
 void EliseApp::reset_selection_callback() {
     selected_keyframes.clear();
 }
