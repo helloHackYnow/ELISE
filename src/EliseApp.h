@@ -32,6 +32,8 @@
 #include "../libs/ImGuiNotify.hpp"
 
 #include "2D renderer/Renderer.h"
+#include "ActionManager.h"
+
 
 class EliseApp {
 
@@ -68,11 +70,6 @@ private:
     void play_audio();
     void stop_audio();
 
-    // Keyframes handling
-    void order_keyframes();
-    void build_keyframe_uuid_to_index_map();
-
-
     // Callback
     void keyframe_creation_callback(int64_t sample);
     void keyframe_deletion_callback();
@@ -92,6 +89,9 @@ private:
     void on_export();
     void on_load_song();
     void on_export_video();
+
+    void on_ctrl_z();
+    void on_ctrl_y();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);
@@ -130,16 +130,10 @@ private:
     int sample_rate = 41000;
     int sample_count = 0;
 
-    // Keyframes
-    std::vector<Keyframe> keyframes;
-    std::map<int64_t, int> keyframe_uuid_to_index;
-    std::set<int64_t> selected_keyframes;
-    int64_t max_keyframe_uuid = 0;
-    bool is_keyframe_edition_window_visible = true;
+    AppState i_s;
+    ActionManager action_manager;
 
-    // Commands
-    std::unordered_map<int64_t, std::vector<Command>> keyframe_uuid_to_commands;
-    int selected_command = 0;
+    bool is_keyframe_edition_window_visible = true;
     bool is_command_edition_window_visible = false;
 
     // Project manager state
