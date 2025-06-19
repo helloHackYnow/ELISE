@@ -342,6 +342,12 @@ void EliseApp::draw_menu_bar() {
 
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Undo", "Ctrl-Z")) on_ctrl_z();
+            if (ImGui::MenuItem("Redo", "Ctrl-Y")) on_ctrl_y();
+        }
+
         if (ImGui::BeginMenu("Window")) {
             ImGui::MenuItem("Project Manager", nullptr, &is_project_manager_visible);
             ImGui::MenuItem("Keyframe Edition", nullptr, &is_keyframe_edition_window_visible);
