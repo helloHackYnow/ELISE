@@ -345,7 +345,8 @@ void EliseApp::draw_menu_bar() {
 
         if (ImGui::BeginMenu("Edit")) {
             if (ImGui::MenuItem("Undo", "Ctrl-Z")) on_ctrl_z();
-            if (ImGui::MenuItem("Redo", "Ctrl-Y")) on_ctrl_y();
+            if (ImGui::MenuItem("Redo", "Ctrl-Y")) on_ctrl_y()
+            ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("Window")) {
