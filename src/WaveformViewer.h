@@ -62,7 +62,7 @@ private:
 
     // Envelope
     std::vector<float> envelope_data;
-    bool show_envelope = false;
+    bool show_envelope = true;
     std::atomic_bool computing_envelope = false;
     float envelope_window_ms = 10.0f;
 

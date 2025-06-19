@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <algorithm> // Ensure this is included at the top of the file
 
+#include "Actions.h"
 #include "imgui_internal.h"
 #include "../fonts/icon_font.h"
 
@@ -240,10 +241,9 @@ void EliseApp::init_light_manager() {
 void EliseApp::compile_commands() {
     std::vector<Command> commands;
 
-    order_keyframes();
-
-    for (auto & keyframe: keyframes) {
-        for (auto & command: keyframe_uuid_to_commands[keyframe.uuid]) {
+    i_s.order_keyframes();
+    for (auto & keyframe: i_s.keyframes) {
+        for (auto & command: i_s.keyframe_uuid_to_commands[keyframe.uuid]) {
 
             retimeCommand(command, keyframe.trigger_sample);
 
@@ -424,19 +424,19 @@ void EliseApp::draw_keyframe_edition_window() {
 
         ImGui::Separator();
 
-        if (selected_keyframes.empty()) {
+        if (i_s.selected_keyframes.empty()) {
             ImGui::BeginDisabled();
             ImGui::Text("No keyframe selected");
             ImGui::EndDisabled();
-        } else if (selected_keyframes.size() > 1) {
+        } else if (i_s.selected_keyframes.size() > 1) {
             ImGui::BeginDisabled();
             ImGui::Text("Multiple keyframes selected");
             ImGui::EndDisabled();
 
             int are_locked = -1; // -1: start value, 0: all locked, 1: all unlocked, 2: mixed
             int are_enabled = -1; // -1: start value, 0: all enabled, 1: all disabled, 2: mixed
-            for (int64_t selected_keyframe: selected_keyframes) {
-                auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+            for (int64_t selected_keyframe: i_s.selected_keyframes) {
+                auto& keyframe = i_s.keyframes[i_s.keyframe_uuid_to_index[selected_keyframe]];
 
                 if (keyframe.is_locked) {
                     if (are_locked == -1 || are_locked == 0) are_locked = 0;
@@ -459,22 +459,20 @@ void EliseApp::draw_keyframe_edition_window() {
             {
                 if (ImGui::Button((const char*)u8"\uf023"))
                 {
-                    for (int64_t selected_keyframe: selected_keyframes) {
-                        auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                    for (int64_t selected_keyframe: i_s.selected_keyframes) {
+                        auto& keyframe = i_s.keyframes[i_s.keyframe_uuid_to_index[selected_keyframe]];
                         keyframe.is_locked = false;
                     }
-                    update_keyframes();
                 }
             }
             else
             {
                 if (ImGui::Button((const char*)u8"\uf3c1"))
                 {
-                    for (int64_t selected_keyframe: selected_keyframes) {
-                        auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                    for (int64_t selected_keyframe: i_s.selected_keyframes) {
+                        auto& keyframe = i_s.keyframes[i_s.keyframe_uuid_to_index[selected_keyframe]];
                         keyframe.is_locked = true;
                     }
-                    update_keyframes();
                 }
             }
 
@@ -482,11 +480,10 @@ void EliseApp::draw_keyframe_edition_window() {
 
             bool enabled = are_enabled == 0;
             if (ImGui::Checkbox("Enabled", &enabled)) {
-                for (int64_t selected_keyframe: selected_keyframes) {
-                    auto& keyframe = keyframes[keyframe_uuid_to_index[selected_keyframe]];
+                for (int64_t selected_keyframe: i_s.selected_keyframes) {
+                    auto& keyframe = i_s.keyframes[i_s.keyframe_uuid_to_index[selected_keyframe]];
                     keyframe.is_enabled = enabled;
                 }
-                update_keyframes();
             }
 
 
@@ -494,10 +491,10 @@ void EliseApp::draw_keyframe_edition_window() {
             std::vector<std::string> commands_str;
             std::vector<const char*> listbox_buff;
 
-            auto selected_keyframe_uuid = *selected_keyframes.begin();
-            auto& keyframe = keyframes.at(keyframe_uuid_to_index.at(selected_keyframe_uuid));
+            auto selected_keyframe_uuid = *i_s.selected_keyframes.begin();
+            auto& keyframe = i_s.keyframes.at(i_s.keyframe_uuid_to_index.at(selected_keyframe_uuid));
 
-            auto& commands = keyframe_uuid_to_commands[selected_keyframe_uuid];
+            auto& commands = i_s.keyframe_uuid_to_commands[selected_keyframe_uuid];
 
             // Draw a lock / unlock button
             if (keyframe.is_locked)
@@ -505,7 +502,6 @@ void EliseApp::draw_keyframe_edition_window() {
                 if (ImGui::Button((const char*)u8"\uf023"))
                 {
                     keyframe.is_locked = false;
-                    update_keyframes();
                 }
             }
             else
@@ -513,19 +509,18 @@ void EliseApp::draw_keyframe_edition_window() {
                 if (ImGui::Button((const char*)u8"\uf3c1"))
                 {
                     keyframe.is_locked = true;
-                    update_keyframes();
                 }
             }
 
             ImGui::SameLine();
-            if (ImGui::Checkbox("Enabled", &keyframe.is_enabled)) update_keyframes();
+            ImGui::Checkbox("Enabled", &keyframe.is_enabled);
 
-            for (auto & command: keyframe_uuid_to_commands[selected_keyframe_uuid]) {
+            for (auto & command: i_s.keyframe_uuid_to_commands[selected_keyframe_uuid]) {
                 commands_str.push_back("Command on group " + groups[command.group_id].name);
                 listbox_buff.push_back(commands_str.back().c_str());
             }
 
-            ImGui::ListBox("###", &selected_command, listbox_buff.data(), listbox_buff.size(), 6);
+            ImGui::ListBox("###", &i_s.selected_command, listbox_buff.data(), listbox_buff.size(), 6);
 
 
 
@@ -535,9 +530,9 @@ void EliseApp::draw_keyframe_edition_window() {
 
             ImGui::SameLine();
 
-            ImGui::BeginDisabled(selected_command < 0 || selected_command >= commands.size());
+            ImGui::BeginDisabled(i_s.selected_command < 0 || i_s.selected_command >= commands.size());
             if (ImGui::Button("Delete")) {
-                commands.erase(commands.begin() + selected_command);
+                commands.erase(commands.begin() + i_s.selected_command);
             }
 
             ImGui::EndDisabled();
@@ -550,21 +545,21 @@ void EliseApp::draw_keyframe_edition_window() {
 
 void EliseApp::draw_command_edition_window() {
     if (ImGui::Begin("Command", &is_command_edition_window_visible)) {
-        if (selected_keyframes.empty() || selected_command < 0) {
+        if (i_s.selected_keyframes.empty() || i_s.selected_command < 0) {
             ImGui::BeginDisabled();
             ImGui::Text("No command selected");
             ImGui::EndDisabled();
-        } else if (selected_keyframes.size() > 1) {
+        } else if (i_s.selected_keyframes.size() > 1) {
             ImGui::BeginDisabled();
             ImGui::Text("Multiple keyframes selected");
             ImGui::EndDisabled();
         } else {
             ImGui::Spacing();
-            auto selected_keyframe_uuid = *selected_keyframes.begin();
-            auto& command = keyframe_uuid_to_commands[selected_keyframe_uuid][selected_command];
-            auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe_uuid]);
+            auto selected_keyframe_uuid = *i_s.selected_keyframes.begin();
+            auto& command = i_s.keyframe_uuid_to_commands[selected_keyframe_uuid][i_s.selected_command];
+            auto& keyframe = i_s.keyframes.at(i_s.keyframe_uuid_to_index[selected_keyframe_uuid]);
 
-            ImGui::Text("Command %d", selected_command);
+            ImGui::Text("Command %d", i_s.selected_command);
 
             ImGui::SameLine();
             float copy_btn_width = ImGui::CalcTextSize((const char *)u8"\uf24d").x + ImGui::GetStyle().FramePadding.x * 2.f;
@@ -702,6 +697,14 @@ void EliseApp::handle_input() {
         if (is_loaded_from_file) on_save();
         else on_save_as();
     }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+        on_ctrl_z();
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_Y)) {
+        on_ctrl_y();
+    }
 }
 
 void EliseApp::update() {
@@ -710,8 +713,9 @@ void EliseApp::update() {
     handle_input();
     update_waveform_viewer();
     update_light_manager();
+    update_keyframes();
 
-    waveform_viewer.set_selected_keyframe(selected_keyframes);
+    waveform_viewer.set_selected_keyframe(i_s.selected_keyframes);
 }
 
 void EliseApp::update_waveform_viewer() {
@@ -737,99 +741,59 @@ void EliseApp::stop_audio() {
     audio_manager.stop();
 }
 
-void EliseApp::order_keyframes() {
-    std::sort(keyframes.begin(), keyframes.end(), compare);
-    build_keyframe_uuid_to_index_map();
-}
-
-void EliseApp::build_keyframe_uuid_to_index_map() {
-    keyframe_uuid_to_index.clear();
-
-    for (size_t i = 0; i < keyframes.size(); ++i) {
-        keyframe_uuid_to_index[keyframes[i].uuid] = i;
-    }
-}
-
 void EliseApp::keyframe_creation_callback(int64_t sample) {
-    max_keyframe_uuid++;
-    keyframes.push_back(Keyframe{sample, max_keyframe_uuid});
-
-    // Create empty command
-    keyframe_uuid_to_commands[max_keyframe_uuid].push_back(Command{});
-
-    order_keyframes();
-    update_keyframes();
-
-    waveform_viewer.set_selected_keyframe(selected_keyframes);
-    selected_keyframes.clear();
-    selected_keyframes.insert(selected_keyframes.begin(), max_keyframe_uuid);
-    selected_command = 0;
+    action_manager.execute(
+        i_s,
+        std::make_unique<EActions::CreateKeyframe>(sample)
+    );
+    waveform_viewer.set_selected_keyframe(i_s.selected_keyframes);
 }
 
 void EliseApp::keyframe_deletion_callback() {
-
-    // Build the list of index to delete
-    std::vector<int> to_delete;
-    to_delete.reserve(selected_keyframes.size());
-    for (int64_t selected_keyframe: selected_keyframes) {
-        to_delete.push_back(keyframe_uuid_to_index[selected_keyframe]);
-        keyframe_uuid_to_index.erase(selected_keyframe);
-    }
-    std::sort(to_delete.begin(), to_delete.end());
-    std::reverse(to_delete.begin(), to_delete.end());
-
-    for (int keyframe_index: to_delete) {
-        keyframes.erase(keyframes.begin() + keyframe_index);
-    }
-
-    build_keyframe_uuid_to_index_map();
-    update_keyframes();
-    selected_keyframes.clear();
+    action_manager.execute(
+        i_s,
+        std::make_unique<EActions::DeleteKeyframes>(i_s.selected_keyframes)
+    );
 }
 
 void EliseApp::keyframe_drag_callback(int64_t delta_sample) {
     // Check if one of the selected keyframe is locked
-    for (int64_t selected_keyframe: selected_keyframes) {
-        if (keyframes.at(keyframe_uuid_to_index[selected_keyframe]).is_locked) return;
+    for (int64_t selected_keyframe: i_s.selected_keyframes) {
+        if (i_s.keyframes.at(i_s.keyframe_uuid_to_index[selected_keyframe]).is_locked) return;
     }
 
-    for (int64_t selected_keyframe: selected_keyframes) {
-        auto& keyframe = keyframes.at(keyframe_uuid_to_index[selected_keyframe]);
-        keyframe.trigger_sample += delta_sample;
-
-        for (auto& command : keyframe_uuid_to_commands[selected_keyframe]) { retimeCommand(command, keyframe.trigger_sample); }
-    }
-
-    order_keyframes();
-    update_keyframes();
+    action_manager.execute(
+        i_s,
+        std::make_unique<EActions::MoveKeyframes>(delta_sample, i_s.selected_keyframes)
+    );
 }
 
 void EliseApp::keyframe_selection_callback(int64_t keyframe_uuid) {
-    selected_keyframes.insert(keyframe_uuid);
+    i_s.selected_keyframes.insert(keyframe_uuid);
 
-    if (selected_keyframes.size() == 1) {
-        auto& commands = keyframe_uuid_to_commands.at(*selected_keyframes.begin());
-        selected_command = std::min(int(commands.size()-1), selected_command);
+    if (i_s.selected_keyframes.size() == 1) {
+        auto& commands = i_s.keyframe_uuid_to_commands.at(*i_s.selected_keyframes.begin());
+        i_s.selected_command = std::min(int(commands.size()-1), i_s.selected_command);
     }
 }
 void EliseApp::reset_selection_callback() {
-    selected_keyframes.clear();
+    i_s.selected_keyframes.clear();
 }
 
 void EliseApp::keyframe_unselection_callback(int64_t keyframe_uuid) {
-    selected_keyframes.erase(keyframe_uuid);
+    i_s.selected_keyframes.erase(keyframe_uuid);
 
-    if (selected_keyframes.size() == 1) {
-        auto& commands = keyframe_uuid_to_commands.at(*selected_keyframes.begin());
-        selected_command = std::min(int(commands.size()-1), selected_command);
+    if (i_s.selected_keyframes.size() == 1) {
+        auto& commands = i_s.keyframe_uuid_to_commands.at(*i_s.selected_keyframes.begin());
+        i_s.selected_command = std::min(int(commands.size()-1), i_s.selected_command);
     }
 }
 
 void EliseApp::update_keyframes() {
     std::vector<Keyframe> waveform_keyframes;
-    waveform_keyframes.reserve(keyframes.size());
+    waveform_keyframes.reserve(i_s.keyframes.size());
 
-    for (auto& keyframe : keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid, keyframe.is_locked, keyframe.is_enabled});}
+    for (auto& keyframe : i_s.keyframes) {waveform_keyframes.push_back({keyframe.trigger_sample, keyframe.uuid, keyframe.is_locked, keyframe.is_enabled});}
 
     waveform_viewer.set_keyframes(waveform_keyframes);
 }
@@ -891,16 +855,24 @@ void EliseApp::on_export_video() {
     is_export_video_dialog_active = true;
 }
 
+void EliseApp::on_ctrl_z() {
+    action_manager.undo_last(i_s);
+}
+
+void EliseApp::on_ctrl_y() {
+    action_manager.redo_last(i_s);
+}
+
 
 void EliseApp::save_project(const std::string &path) {
 
     ProjectData project_data;
-    project_data.keyframes = keyframes;
+    project_data.keyframes = i_s.keyframes;
     project_data.groups = groups;
     project_data.light_count = light_count;
     project_data.sample_rate = audio_manager.getSampleRate();
-    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
-    project_data.max_uuid = max_keyframe_uuid;
+    project_data.keyframe_uuid_to_commands = i_s.keyframe_uuid_to_commands;
+    project_data.max_uuid = i_s.max_keyframe_uuid;
 
     save(path, project_data);
     is_loaded_from_file = true;
@@ -921,14 +893,13 @@ void EliseApp::load_project(const std::string &path) {
     }
 
     if (!error) {
-        keyframes = p.keyframes;
+        i_s.keyframes = p.keyframes;
         groups = p.groups;
-        keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
+        i_s.keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
         light_count = p.light_count;
-        max_keyframe_uuid = p.max_uuid;
+        i_s.max_keyframe_uuid = p.max_uuid;
 
-        order_keyframes();
-        update_keyframes();
+        i_s.order_keyframes();
         is_loaded_from_file = true;
         filepath = path;
 
@@ -941,14 +912,14 @@ void EliseApp::load_project(const std::string &path) {
 }
 
 void EliseApp::export_project(const std::string &path) {
-    order_keyframes();
+    i_s.order_keyframes();
 
     ProjectData project_data;
-    project_data.keyframes = keyframes;
+    project_data.keyframes = i_s.keyframes;
     project_data.groups = groups;
     project_data.light_count = light_count;
     project_data.sample_rate = audio_manager.getSampleRate();
-    project_data.keyframe_uuid_to_commands = keyframe_uuid_to_commands;
+    project_data.keyframe_uuid_to_commands = i_s.keyframe_uuid_to_commands;
 
     auto content = generate_python_script(project_data);
 
@@ -1092,9 +1063,9 @@ void EliseApp::start_export(const std::string &path) {
 
     is_exporting = true;
 
-    order_keyframes();
+    i_s.order_keyframes();
 
-    auto last_k = keyframes.back();
+    auto last_k = i_s.keyframes.back();
 
     compile_commands();
 

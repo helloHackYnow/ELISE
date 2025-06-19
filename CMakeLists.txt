@@ -154,6 +154,12 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/2D\ renderer/Renderer.cpp
         src/Encoder.cpp
         src/Encoder.h
+        src/ActionManager.cpp
+        src/ActionManager.h
+        src/Actions.cpp
+        src/Actions.h
+        src/AppState.cpp
+        src/AppState.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})
