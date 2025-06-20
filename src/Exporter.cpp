@@ -102,6 +102,17 @@ std::string generate_python_script(const ProjectData &data) {
         out += tab + std::string(buffer) + new_line;
     }
 
+    out += new_line;
+
+    for (int i = 0; i < data.light_count; ++i) {
+        sprintf(buffer, "off(0, group_%d)", i);
+        out += tab;
+        out += std::string(buffer);
+        out += new_line;
+    }
+
+    out += new_line;
+
     out += new_line + new_line;
 
     // Generate commands
