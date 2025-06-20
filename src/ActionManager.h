@@ -36,7 +36,17 @@ public:
 };
 
 class Composite : public Action {
-    std::vector<std::unique_ptr<Action>> actions;
+    std::vector<std::unique_ptr<Action>> actions = {};
+public:
+    Composite() = default;
+
+    bool AddAction(std::unique_ptr<Action> action);
+
+    bool Execute(AppState& state) override;
+    bool Undo(AppState& state) override;
+    bool IsMergeable(const Action* other) override {return false;}
+    bool Merge(std::unique_ptr<Action> action) override {return false;};
+    std::string GetDescription() const override { return "Composite"; }
 };
 
 class ActionManager {

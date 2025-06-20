@@ -36,8 +36,8 @@ int64_t AppState::create_keyframe(const Keyframe &keyframe) {
     auto uuid = create_keyframe(keyframe.trigger_sample);
     auto& keyframe_ = keyframes.at(keyframe_uuid_to_index.at(uuid));
 
-    keyframe_ = keyframe;
-    keyframe_.uuid = uuid;
+    keyframe_.is_enabled = keyframe.is_enabled;
+    keyframe_.is_locked = keyframe.is_locked;
 
     return uuid;
 }
@@ -47,6 +47,7 @@ int64_t AppState::create_keyframe(const Keyframe &keyframe, int64_t uuid) {
     auto& keyframe_ = keyframes.at(keyframe_uuid_to_index.at(uuid));
 
     keyframe_ = keyframe;
+    keyframe_.uuid = uuid;
     return uuid;
 }
 

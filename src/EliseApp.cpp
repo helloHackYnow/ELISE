@@ -344,8 +344,11 @@ void EliseApp::draw_menu_bar() {
         }
 
         if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Copy", "Ctrl-C")) on_ctrl_c();
+            if (ImGui::MenuItem("Paste", "Ctrl-V")) on_ctrl_v();
+            ImGui::Separator();
             if (ImGui::MenuItem("Undo", "Ctrl-Z")) on_ctrl_z();
-            if (ImGui::MenuItem("Redo", "Ctrl-Y")) on_ctrl_y()
+            if (ImGui::MenuItem("Redo", "Ctrl-Y")) on_ctrl_y();
             ImGui::EndMenu();
         }
 
@@ -712,6 +715,14 @@ void EliseApp::handle_input() {
     if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_Y)) {
         on_ctrl_y();
     }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
+        on_ctrl_c();
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
+        on_ctrl_v();
+    }
 }
 
 void EliseApp::update() {
@@ -870,6 +881,42 @@ void EliseApp::on_ctrl_y() {
     action_manager.redo_last(i_s);
 }
 
+void EliseApp::on_ctrl_c() {
+
+    if (!waveform_viewer.isFocused()) return;
+
+    if (i_s.selected_keyframes.empty()) {
+        ImGui::InsertNotification(
+            {ImGuiToastType::Warning, 3000, "Please select the keyframes you want to copy !"}
+        );
+        return;
+    }
+
+    copy_keyframes(i_s.selected_keyframes);
+    if (i_s.selected_keyframes.size() == 1) {
+        ImGui::InsertNotification(
+            {ImGuiToastType::Info, 3000, "Keyframe copied !"}
+        );
+    } else {
+        ImGui::InsertNotification(
+             {ImGuiToastType::Info, 3000, "Keyframes copied !"}
+         );
+    }
+
+}
+
+void EliseApp::on_ctrl_v() {
+    if (!waveform_viewer.isFocused()) return;
+
+    if (!has_copied_keyframes) {
+        ImGui::InsertNotification(
+            {ImGuiToastType::Warning, 3000, "You have not copied any keyframe !"}
+        );
+    } else {
+        paste_keyframes(waveform_viewer.get_cursor_position());
+    }
+}
+
 
 void EliseApp::save_project(const std::string &path) {
 
@@ -1014,9 +1061,54 @@ void EliseApp::copy_commands(const std::vector<Command> &commands) {
     copied_commands = commands;
 }
 
+void EliseApp::copy_keyframes(const std::set<int64_t> &uuids) {
+    has_copied_keyframes = true;
+    copied_keyframes.clear();
+
+    for (int64_t uuid: uuids) {
+        auto& keyframe = i_s.keyframes.at(i_s.keyframe_uuid_to_index.at(uuid));
+        auto& commands = i_s.keyframe_uuid_to_commands.at(uuid);
+
+        copied_keyframes.emplace_back(keyframe, commands);
+    }
+
+    std::sort(
+        copied_keyframes.begin(),
+        copied_keyframes.end(),
+        [](const std::pair<Keyframe, std::vector<Command>> &a, const std::pair<Keyframe, std::vector<Command>> &b) {
+            return a.first.trigger_sample < b.first.trigger_sample;
+        }
+    );
+
+    // Retime each keyframe
+    int64_t first_trigger_sample = 0;
+    if (!copied_keyframes.empty()) first_trigger_sample = copied_keyframes[0].first.trigger_sample;
+    for (auto & pair: copied_keyframes) {
+        pair.first.trigger_sample -= first_trigger_sample;
+
+        for (auto & command: pair.second) { retimeCommand(command, pair.first.trigger_sample); }
+    }
+}
+
+void EliseApp::paste_keyframes(int64_t first_samples) {
+    if (!has_copied_keyframes) return;
+
+    auto action = std::make_unique<Composite>();
+
+    for (auto pair: copied_keyframes) {
+        pair.first.trigger_sample += first_samples;
+
+        for (auto & command: pair.second) { retimeCommand(command, pair.first.trigger_sample); }
+
+        action->AddAction(
+            std::make_unique<EActions::SpawnKeyframe>(pair.first, pair.second)
+        );
+    }
+
+    action_manager.execute(i_s, std::move(action));
+}
+
 void EliseApp::color_picker(const char *label, Color &color) {
-
-
 
     ImGui::PushID(label);
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));

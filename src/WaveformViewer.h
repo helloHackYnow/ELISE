@@ -71,8 +71,7 @@ private:
     int64_t gradient_duration; // In sample
     bool draw_gradient_preview;
 
-
-
+    bool is_focused = false;
 
 private:
 
@@ -103,8 +102,10 @@ private:
 
     int get_first_note_at_sample(int sample) const;
 
+
 public:
     WaveformViewer();
+    bool isFocused();
     void draw();
 
     void set_cursor_position(float cursor_position);

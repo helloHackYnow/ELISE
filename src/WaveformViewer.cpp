@@ -686,6 +686,10 @@ int WaveformViewer::get_first_note_at_sample(int sample) const {
     return -1;
 }
 
+bool WaveformViewer::isFocused() {
+    return is_focused;
+}
+
 WaveformViewer::WaveformViewer() {
 
 }
@@ -696,6 +700,8 @@ void WaveformViewer::draw() {
 
 
     ImGui::Begin("Waveform Viewer", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
+
+    is_focused = ImGui::IsWindowFocused();
 
     drawMenuBar();
 

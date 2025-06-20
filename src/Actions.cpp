@@ -6,6 +6,21 @@
 
 #include <sys/stat.h>
 
+bool EActions::SpawnKeyframe::Execute(AppState &state) {
+    if (uuid < 0) uuid = state.create_keyframe(keyframe, commands);
+    else state.create_keyframe(keyframe, commands, uuid);
+
+    return true;
+}
+
+bool EActions::SpawnKeyframe::Undo(AppState &state) {
+    state.delete_keyframes({uuid});
+
+    state.selected_keyframes.clear();
+    state.selected_command = -1;
+
+    return true;
+}
 
 bool EActions::CreateKeyframe::Execute(AppState &state) {
     if (uuid < 0) uuid = state.create_keyframe(trigger_sample);

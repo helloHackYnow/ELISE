@@ -92,6 +92,8 @@ private:
 
     void on_ctrl_z();
     void on_ctrl_y();
+    void on_ctrl_c();
+    void on_ctrl_v();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);
@@ -103,6 +105,8 @@ private:
     void copy_color(const Color& color);
     void copy_command(const Command& command);
     void copy_commands(const std::vector<Command>& commands);
+    void copy_keyframes(const std::set<int64_t>& uuids);
+    void paste_keyframes(int64_t first_samples);
 
     // ImGui components
     void color_picker(const char* label, Color& color);
@@ -173,6 +177,9 @@ private:
 
     Color copied_color;
     bool has_copied_color = false;
+
+    std::vector<std::pair<Keyframe, std::vector<Command>>> copied_keyframes;
+    bool has_copied_keyframes = false;
 
     // Video exporting system
     //-----------------------

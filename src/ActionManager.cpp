@@ -4,6 +4,25 @@
 
 #include "ActionManager.h"
 
+bool Composite::AddAction(std::unique_ptr<Action> action) {
+    actions.push_back(std::move(action));
+    return true;
+}
+
+bool Composite::Execute(AppState &state) {
+    for (auto& action : actions) {
+        action->Execute(state);
+    }
+    return true;
+}
+
+bool Composite::Undo(AppState &state) {
+    for (int i = actions.size() - 1; i > -1; --i) {
+        actions[i]->Undo(state);
+    }
+    return true;
+}
+
 bool ActionManager::execute(AppState &state, std::unique_ptr<Action> action) {
     if (!action->Execute(state)) {
         return false;

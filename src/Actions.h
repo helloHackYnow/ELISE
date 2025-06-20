@@ -10,16 +10,30 @@
 namespace EActions {
 
     enum Kind {
+        spawn_keyframe,
         create_keyframe,
         delete_keyframe,
         move_keyframes,
+    };
+
+    class SpawnKeyframe : public Action {
+        int uuid = -1;
+        Keyframe keyframe;
+        std::vector<Command> commands;
+    public:
+        SpawnKeyframe(Keyframe keyframe, const std::vector<Command>& commands) : keyframe(keyframe), commands(commands) {kind=spawn_keyframe;}
+        bool Execute(AppState &state) override;
+        bool Undo(AppState &state) override;
+        bool IsMergeable(const Action *other) override {return false;}
+        bool Merge(std::unique_ptr<Action> action) override {return false;}
+        std::string GetDescription() const override {return "SpawnKeyframe";}
     };
 
     class CreateKeyframe : public Action {
         int64_t trigger_sample;
         int64_t uuid = -1;
     public:
-        CreateKeyframe(int64_t trigger_sample) : trigger_sample(trigger_sample) {kind = create_keyframe;};
+        explicit CreateKeyframe(int64_t trigger_sample) : trigger_sample(trigger_sample) {kind = create_keyframe;}
         bool Execute(AppState &state) override;
         bool Undo(AppState &state) override;
         bool IsMergeable(const Action *other) override;
