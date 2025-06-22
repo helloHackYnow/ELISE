@@ -79,6 +79,8 @@ private:
     void reset_selection_callback();
     void keyframe_unselection_callback(int64_t keyframe_uuid);
 
+    void space_keyframes_evenly(const std::set<int64_t>& keyframes);
+
     void update_keyframes();
 
     void new_group(const std::string& name, const std::vector<size_t>& ids);
@@ -94,6 +96,7 @@ private:
     void on_ctrl_y();
     void on_ctrl_c();
     void on_ctrl_v();
+    void on_ctrl_l();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);

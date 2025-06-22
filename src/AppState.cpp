@@ -103,3 +103,7 @@ void AppState::build_keyframe_uuid_to_index_map() {
         keyframe_uuid_to_index[keyframes[i].uuid] = i;
     }
 }
+
+Keyframe & AppState::get_keyframe(int64_t uuid) {
+    return keyframes.at(keyframe_uuid_to_index.at(uuid));
+}

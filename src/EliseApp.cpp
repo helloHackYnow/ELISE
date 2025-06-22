@@ -723,6 +723,10 @@ void EliseApp::handle_input() {
     if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
         on_ctrl_v();
     }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_L)) {
+        on_ctrl_l();
+    }
 }
 
 void EliseApp::update() {
@@ -805,6 +809,35 @@ void EliseApp::keyframe_unselection_callback(int64_t keyframe_uuid) {
         auto& commands = i_s.keyframe_uuid_to_commands.at(*i_s.selected_keyframes.begin());
         i_s.selected_command = std::min(int(commands.size()-1), i_s.selected_command);
     }
+}
+
+void EliseApp::space_keyframes_evenly(const std::set<int64_t> &keyframes) {
+
+    if (keyframes.empty() || keyframes.size() == 1) return;
+
+    // Build a sorted vector of the uuid of the keyframes
+    std::vector<int64_t> uuids(keyframes.begin(), keyframes.end());
+
+    std::sort(uuids.begin(), uuids.end(),
+        [this](const int64_t& a, const int64_t& b) {
+            return i_s.get_keyframe(a).trigger_sample < i_s.get_keyframe(b).trigger_sample;
+        }
+    );
+
+    int64_t spacing = (i_s.get_keyframe(uuids.back()).trigger_sample - i_s.get_keyframe(uuids.front()).trigger_sample) / (uuids.size()-1);
+    int64_t start = i_s.get_keyframe(uuids.front()).trigger_sample;
+
+    auto action = std::make_unique<Composite>();
+
+    for (int i = 0; i < uuids.size(); ++i) {
+        int delta = i*spacing + start - i_s.get_keyframe(uuids[i]).trigger_sample;
+        std::set<int64_t> k = {uuids[i]};
+        action->AddAction(
+            std::make_unique<EActions::MoveKeyframes>(delta, k)
+        );
+    }
+
+    action_manager.execute(i_s, std::move(action));
 }
 
 void EliseApp::update_keyframes() {
@@ -915,6 +948,11 @@ void EliseApp::on_ctrl_v() {
     } else {
         paste_keyframes(waveform_viewer.get_cursor_position());
     }
+}
+
+void EliseApp::on_ctrl_l() {
+    if (!waveform_viewer.isFocused()) return;
+    space_keyframes_evenly(i_s.selected_keyframes);
 }
 
 

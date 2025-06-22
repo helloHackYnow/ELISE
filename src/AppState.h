@@ -34,6 +34,8 @@ public:
 
     void order_keyframes();
     void build_keyframe_uuid_to_index_map();
+
+    Keyframe& get_keyframe(int64_t uuid);
 };
 
 
