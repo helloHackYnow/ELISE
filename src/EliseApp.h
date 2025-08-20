@@ -54,6 +54,7 @@ private:
     void draw();
 
     void draw_export_pop_up();
+    void draw_save_popup();
     void draw_menu_bar();
     void draw_player();
     void draw_viewport();
@@ -92,6 +93,7 @@ private:
     void on_load_song();
     void on_export_video();
 
+    void on_r();
     void on_ctrl_z();
     void on_ctrl_y();
     void on_ctrl_c();
@@ -169,6 +171,7 @@ private:
     // Save / filename
     bool is_loaded_from_file = false;
     std::string filepath;
+    bool should_draw_save_popup = false;
 
     // Copy / Paste system
     //--------------------

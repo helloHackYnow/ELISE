@@ -20,6 +20,7 @@ struct ProjectData {
 struct JsonKeyframes {
     int64_t trigger_sample = 0;
     std::vector<Command> commands;
+    bool locked = false;
 };
 
 using json = nlohmann::json;

@@ -261,7 +261,9 @@ void EliseApp::draw() {
 
     ImGui::BeginDisabled(is_dialog_opened | is_exporting);
 
+
     if (!is_exporting) {
+        draw_save_popup();
         draw_menu_bar();
         draw_player();
         draw_keyframe_edition_window();
@@ -269,7 +271,6 @@ void EliseApp::draw() {
         waveform_viewer.draw();
         draw_viewport();
     }
-
 
     // Notifications style setup
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f); // Disable round borders
@@ -290,6 +291,8 @@ void EliseApp::draw() {
     ImGui::PopStyleColor(1);
 
     ImGui::EndDisabled();
+
+
 
     if (is_exporting) {
         draw_export_pop_up();
@@ -325,6 +328,19 @@ void EliseApp::draw_export_pop_up() {
     ImGui::End();
 
     ImGui::PopStyleColor();
+}
+
+void EliseApp::draw_save_popup() {
+    if (ImGui::BeginPopupModal("Save your file", &should_draw_save_popup, ImGuiWindowFlags_NoTitleBar)) {
+
+        ImGui::Text("Remember to save you file before closing the application !");
+        ImGui::Separator();
+        ImGui::Button("Save");
+        ImGui::SameLine();
+        ImGui::Button("Cancel");
+
+        ImGui::EndPopup();
+    }
 }
 
 void EliseApp::draw_menu_bar() {
@@ -727,6 +743,12 @@ void EliseApp::handle_input() {
     if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_L)) {
         on_ctrl_l();
     }
+
+    if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_A)) {
+        should_draw_save_popup = !should_draw_save_popup;
+    }
+
+    if (waveform_viewer.isFocused() && ImGui::IsKeyPressed(ImGuiKey_R)) on_r();
 }
 
 void EliseApp::update() {
@@ -904,6 +926,11 @@ void EliseApp::on_export_video() {
         std::vector<std::string>{"MP4 file", "*.mp4"},
         pfd::opt::none);
     is_export_video_dialog_active = true;
+}
+
+void EliseApp::on_r() {
+    compile_commands();
+    light_manager.update(waveform_viewer.get_cursor_position());
 }
 
 void EliseApp::on_ctrl_z() {
