@@ -104,6 +104,34 @@ void AppState::build_keyframe_uuid_to_index_map() {
     }
 }
 
+void AppState::update_last_selected() {
+    if (selected_keyframes.size() == 1) {
+        last_selected_uuid = *selected_keyframes.begin();
+        last_selected_content = get_keyframe_content(last_selected_uuid);
+    } else {
+        last_selected_uuid = -1;
+    }
+}
+
+bool AppState::is_selected_keyframe_edited() {
+    if (selected_keyframes.size() != 1) {
+        return false;
+    }
+
+    auto uuid = *selected_keyframes.begin();
+    if (last_selected_uuid != uuid) {
+        return false;
+    }
+
+    auto new_content = get_keyframe_content(uuid);
+    return new_content != last_selected_content;
+}
+
 Keyframe & AppState::get_keyframe(int64_t uuid) {
     return keyframes.at(keyframe_uuid_to_index.at(uuid));
+}
+
+KeyframeContent AppState::get_keyframe_content(int64_t uuid) {
+    auto& keyframe = get_keyframe(uuid);
+    return KeyframeContent{keyframe.is_locked, keyframe.is_enabled, keyframe_uuid_to_commands.at(uuid)};
 }

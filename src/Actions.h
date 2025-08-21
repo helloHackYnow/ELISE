@@ -14,6 +14,7 @@ namespace EActions {
         create_keyframe,
         delete_keyframe,
         move_keyframes,
+        edit_keyframe_content,
     };
 
     class SpawnKeyframe : public Action {
@@ -66,6 +67,23 @@ namespace EActions {
         std::string GetDescription() const override;
         const std::set<int64_t>& GetKeyframes() const;
         int64_t GetSampleDelta() const;
+    };
+
+    class EditKeyframeContent : public Action {
+        int64_t uuid;
+
+        // Old keyframe content
+        KeyframeContent m_old;
+
+        // New keyframe content
+        KeyframeContent m_new;
+    public:
+        EditKeyframeContent(int64_t uuid, KeyframeContent old_content, KeyframeContent new_content);
+        bool Execute(AppState &state) override;
+        bool Undo(AppState &state) override;
+        bool IsMergeable(const Action *other) override;
+        bool Merge(std::unique_ptr<Action> action) override;
+        std::string GetDescription() const override;
     };
 }
 

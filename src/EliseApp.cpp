@@ -759,6 +759,13 @@ void EliseApp::update() {
     update_light_manager();
     update_keyframes();
 
+    if (i_s.is_selected_keyframe_edited()) {
+        auto selected_uuid = *i_s.selected_keyframes.begin();
+        auto new_content = i_s.get_keyframe_content(selected_uuid);
+        action_manager.execute(i_s, std::make_unique<EActions::EditKeyframeContent>(selected_uuid, i_s.last_selected_content, new_content));
+    }
+    i_s.update_last_selected();
+
     waveform_viewer.set_selected_keyframe(i_s.selected_keyframes);
 }
 

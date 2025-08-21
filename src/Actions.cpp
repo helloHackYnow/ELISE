@@ -89,9 +89,11 @@ bool EActions::MoveKeyframes::Execute(AppState &state) {
         auto& keyframe = state.keyframes.at(state.keyframe_uuid_to_index.at(uuid));
         keyframe.trigger_sample += sample_delta;
 
+        /* We don't retime as is cause a modification to the keyframe content
         for (auto & command: state.keyframe_uuid_to_commands.at(uuid)) {
             retimeCommand(command, keyframe.trigger_sample);
         }
+        */
     }
 
     state.order_keyframes();
@@ -142,4 +144,42 @@ const std::set<int64_t> & EActions::MoveKeyframes::GetKeyframes() const {
 
 int64_t EActions::MoveKeyframes::GetSampleDelta() const {
     return sample_delta;
+}
+
+EActions::EditKeyframeContent::EditKeyframeContent(int64_t uuid, KeyframeContent old_content,
+    KeyframeContent new_content) {
+    this->uuid = uuid;
+    m_new = new_content;
+    m_old = old_content;
+}
+
+bool EActions::EditKeyframeContent::Execute(AppState &state) {
+    state.keyframe_uuid_to_commands[uuid] = m_new.commands;
+    state.keyframes.at(state.keyframe_uuid_to_index.at(uuid)).is_locked = m_new.is_locked;
+    state.keyframes.at(state.keyframe_uuid_to_index.at(uuid)).is_enabled = m_new.is_enabled;
+    return true;
+}
+
+bool EActions::EditKeyframeContent::Undo(AppState &state) {
+    state.selected_keyframes.clear();
+    state.selected_keyframes = {uuid};
+    state.keyframe_uuid_to_commands[uuid] = m_old.commands;
+    state.keyframes.at(state.keyframe_uuid_to_index.at(uuid)).is_locked = m_old.is_locked;
+    state.keyframes.at(state.keyframe_uuid_to_index.at(uuid)).is_enabled = m_old.is_enabled;
+    state.last_selected_uuid = -1;
+    return true;
+}
+
+bool EActions::EditKeyframeContent::IsMergeable(const Action *other) {
+    return other->kind == edit_keyframe_content;
+}
+
+bool EActions::EditKeyframeContent::Merge(std::unique_ptr<Action> action) {
+    auto other = (const EditKeyframeContent*)(action.get());
+    m_old = other->m_old;
+    return true;
+}
+
+std::string EActions::EditKeyframeContent::GetDescription() const {
+    return "Edit keyframe content";
 }

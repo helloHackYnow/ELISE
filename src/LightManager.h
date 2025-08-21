@@ -20,6 +20,10 @@ struct Color {
     int g = 0;
     int b = 0;
     int a = 255;
+
+    bool operator==(const Color &other) const {
+        return r == other.r && g == other.g && b == other.b && a == other.a;
+    }
 };
 
 ImVec4 get_vec(const Color& col);
@@ -108,6 +112,15 @@ struct GradientInfo {
 
     int64_t start_sample;
     unsigned int duration; // In sample count
+
+    bool operator==(const GradientInfo & other) const {
+        return
+            start_color == other.start_color &&
+            end_color == other.end_color &&
+            kind == other.kind &&
+            start_sample == other.start_sample &&
+            duration == other.duration;
+    }
 };
 
 Color computeGradientColor(const GradientInfo& gradient, int64_t sample);
@@ -115,6 +128,10 @@ Color computeGradientColor(const GradientInfo& gradient, int64_t sample);
 struct ToggleInfo {
     bool is_on = true;
     Color color;
+
+    bool operator==(const ToggleInfo & other) const {
+        return is_on == other.is_on && color == other.color;
+    }
 };
 
 Color computeToggleColor(const ToggleInfo& toggle, int64_t sample);
@@ -124,6 +141,14 @@ struct BlinkInfo {
     Color off_color;
     int64_t start_sample;
     int64_t period; // In sample count
+
+    bool operator==(const BlinkInfo & other) const {
+        return
+            start_sample == other.start_sample &&
+            period == other.period &&
+            on_color == other.on_color &&
+            off_color == other.off_color;
+    }
 };
 
 Color computeBlinkColor(const BlinkInfo& blink, int64_t sample);
@@ -135,12 +160,39 @@ struct AnimationDesc {
     ToggleInfo toggle;
     BlinkInfo blink;
 
+    bool operator==(const AnimationDesc& other) const {
+        if (kind != other.kind) {
+            return false;
+        }
+
+        switch (kind) {
+            case AnimationKind::gradient:
+                return gradient == other.gradient;
+            case AnimationKind::toggle:
+                return toggle == other.toggle;
+            case AnimationKind::blink:
+                return blink == other.blink;
+            default:
+                return false;
+        }
+
+
+    }
+
 };
 
 struct Command {
     AnimationDesc animation;
     int64_t trigger_sample;
     int group_id;
+
+     bool operator==(const Command &other) const {
+        return
+            animation==other.animation &&
+            trigger_sample==other.trigger_sample &&
+            group_id==other.group_id;
+
+    }
 };
 
 struct Keyframe {
