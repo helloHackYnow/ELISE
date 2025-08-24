@@ -160,6 +160,7 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/Actions.h
         src/AppState.cpp
         src/AppState.h
+        libs/miniaudio.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})

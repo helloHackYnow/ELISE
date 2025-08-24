@@ -44,6 +44,30 @@ bool AudioManager::loadMP3(const std::string& path) {
     return true;
 }
 
+bool AudioManager::loadMP3(std::vector<unsigned char> &data) {
+    ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 1, sample_rate);
+    ma_decoder decoder;
+
+    if (ma_decoder_init_memory(data.data(), data.size(), &config, &decoder) != MA_SUCCESS)
+        return false;
+
+    ma_uint64 frameCount;
+    float* audioData = nullptr;
+
+    if (ma_decode_memory(data.data(), data.size(), &config, &frameCount, (void**)&audioData) != MA_SUCCESS) {
+        ma_decoder_uninit(&decoder);
+        return false;
+    }
+
+    original_samples.assign(audioData, audioData + frameCount);
+    sample_rate = decoder.outputSampleRate;
+
+    ma_free(audioData, nullptr);
+    ma_decoder_uninit(&decoder);
+
+    return true;
+}
+
 const std::vector<float> & AudioManager::getOriginalSamples() const {
     return original_samples;
 }

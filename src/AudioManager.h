@@ -18,6 +18,7 @@ public:
     ~AudioManager();
 
     bool loadMP3(const std::string& path);
+    bool loadMP3(std::vector<unsigned char>& data);
 
     const std::vector<float>& getOriginalSamples() const;
     int getSampleRate() const;
