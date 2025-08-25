@@ -34,6 +34,8 @@
 #include "2D renderer/Renderer.h"
 #include "ActionManager.h"
 
+#include "ProjectFileUtils.h"
+
 
 class EliseApp {
 
@@ -88,6 +90,9 @@ private:
 
     void on_save();
     void on_save_as();
+    void on_save_full_project();
+    void on_save_full_project_as();
+    void on_open_full_project();
     void on_open_project();
     void on_export();
     void on_load_song();
@@ -99,9 +104,12 @@ private:
     void on_ctrl_c();
     void on_ctrl_v();
     void on_ctrl_l();
+    void on_ctrl_s();
 
     void save_project(const std::string& path);
     void load_project(const std::string& path);
+    void load_full_project(const std::string& path);
+    void save_full_project(const std::string& path);
     void export_project(const std::string& path);
     void load_song(const std::string& path);
 
@@ -168,8 +176,16 @@ private:
     std::unique_ptr<pfd::save_file> export_video_dialog;
     bool is_export_video_dialog_active = false;
 
+    std::unique_ptr<pfd::open_file> open_full_project_dialog;
+    bool is_open_full_project_dialog_active = false;
+
+    std::unique_ptr<pfd::save_file> save_full_project_dialog;
+    bool is_save_full_project_dialog_active = false;
+
     // Save / filename
+    bool is_loaded_from_full_project_file = false;
     bool is_loaded_from_file = false;
+    std::string full_project_path;
     std::string filepath;
     bool should_draw_save_popup = false;
 

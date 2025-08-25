@@ -18,6 +18,16 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(glfw)   # Builds libglfw and exports target glfw
 
+set(MZ_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(MZ_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+set(MZ_LZMA OFF CACHE BOOL "" FORCE)
+set(MZ_BZIP2 OFF CACHE BOOL "" FORCE)
+set(MZ_ZSTD OFF CACHE BOOL "" FORCE)
+set(MZ_ZLIB ON CACHE BOOL "" FORCE) # Let it fetch zlib automatically if needed
+add_subdirectory(minizip-ng)
+
+
+
 # Add ImGui submodule (core + GLFW backend)
 add_library(imgui
         imgui/imgui.cpp
@@ -161,9 +171,14 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/AppState.cpp
         src/AppState.h
         libs/miniaudio.h
+        src/ProjectFileUtils.h
+        src/ProjectFileUtils.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${FFMPEG_INCLUDE_DIRS}
+        minizip-ng
+)
 
 find_package(OpenGL REQUIRED)
 
@@ -174,6 +189,7 @@ target_link_libraries(${PROJECT_NAME}
         ${CMAKE_DL_LIBS}
         OpenGL::GL
         ${FFMPEG_LIBRARIES}
+        minizip
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

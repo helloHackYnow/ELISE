@@ -347,11 +347,16 @@ void EliseApp::draw_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open")) on_open_project();
+            if (ImGui::MenuItem("Open full project")) on_open_full_project();
             ImGui::Separator();
             ImGui::BeginDisabled(!is_loaded_from_file);
             if (ImGui::MenuItem("Save", "Ctrl-S")) on_save();
             ImGui::EndDisabled();
             if (ImGui::MenuItem("Save as")) on_save_as();
+            ImGui::BeginDisabled(!is_loaded_from_full_project_file);
+            if (ImGui::MenuItem("Save full project")) on_save_full_project();
+            ImGui::EndDisabled();
+            if (ImGui::MenuItem("Save full project as")) on_save_full_project_as();
             ImGui::Separator();
             if (ImGui::MenuItem("Export script")) on_export();
             if (ImGui::MenuItem("Export video")) on_export_video();
@@ -720,8 +725,7 @@ void EliseApp::handle_input() {
     }
 
     if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)) {
-        if (is_loaded_from_file) on_save();
-        else on_save_as();
+        on_ctrl_s();
     }
 
     if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_Z)) {
@@ -916,6 +920,30 @@ void EliseApp::on_export() {
     is_export_project_dialog_active = true;
 }
 
+void EliseApp::on_save_full_project() {
+    if (is_loaded_from_full_project_file) save_full_project(full_project_path);
+}
+
+void EliseApp::on_save_full_project_as() {
+    save_full_project_dialog = std::make_unique<pfd::save_file>(
+        "Save full project",
+        "",
+        std::vector<std::string>{"Full elise project", "*.eliseproj"},
+        pfd::opt::none
+        );
+    is_save_full_project_dialog_active = true;
+}
+
+void EliseApp::on_open_full_project() {
+    open_full_project_dialog = std::make_unique<pfd::open_file>(
+        "Open full project",
+        "",
+        std::vector<std::string>{"Full elise project", "*.eliseproj"},
+        pfd::opt::none
+        );
+    is_open_full_project_dialog_active = true;
+}
+
 void EliseApp::on_load_song() {
     load_song_dialog = std::make_unique<pfd::open_file>(
         "Load MP3 file",
@@ -989,6 +1017,12 @@ void EliseApp::on_ctrl_l() {
     space_keyframes_evenly(i_s.selected_keyframes);
 }
 
+void EliseApp::on_ctrl_s() {
+    if (is_loaded_from_file) on_save();
+    else if (is_loaded_from_full_project_file) on_save_full_project();
+    else on_save_full_project_as();
+}
+
 
 void EliseApp::save_project(const std::string &path) {
 
@@ -1012,7 +1046,7 @@ void EliseApp::load_project(const std::string &path) {
     bool error = false;
 
     try {
-        p = load(path);
+        p = load_from_path(path);
     } catch (const std::exception &e) {
         ImGui::InsertNotification({ImGuiToastType::Error, 3000, "Not a valid ELISE file !"});
         error = true;
@@ -1031,10 +1065,62 @@ void EliseApp::load_project(const std::string &path) {
 
         ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project was loaded !"});
     }
+}
 
+void EliseApp::load_full_project(const std::string &path) {
+    auto project = EliseProject::load(path);
 
+    is_loaded_from_full_project_file = true;
+    is_loaded_from_file = false;
+    full_project_path = path;
 
+    audio_manager.loadMP3(project.mp3_data);
+    ProjectData p = load_from_data(project.json_data);
 
+    i_s.keyframes = p.keyframes;
+    groups = p.groups;
+    i_s.keyframe_uuid_to_commands = p.keyframe_uuid_to_commands;
+    light_count = p.light_count;
+    i_s.max_keyframe_uuid = p.max_uuid;
+
+    i_s.order_keyframes();
+
+    auto& data = audio_manager.getOriginalSamples();
+    waveform_viewer.set_waveform_data(data);
+    waveform_viewer.set_sample_rate(audio_manager.getSampleRate());
+    sample_rate = audio_manager.getSampleRate();
+    sample_count = data.size();
+
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project have been loaded !"});
+}
+
+void EliseApp::save_full_project(const std::string &path) {
+
+    is_loaded_from_full_project_file = true;
+    is_loaded_from_file = false;
+    full_project_path = path;
+
+    ProjectData project_data;
+    project_data.keyframes = i_s.keyframes;
+    project_data.groups = groups;
+    project_data.light_count = light_count;
+    project_data.sample_rate = audio_manager.getSampleRate();
+    project_data.keyframe_uuid_to_commands = i_s.keyframe_uuid_to_commands;
+    project_data.max_uuid = i_s.max_keyframe_uuid;
+
+    json j;
+    to_json(j, project_data);
+    std::string str = j.dump();
+    std::vector<unsigned char> json_data(str.begin(), str.end());
+
+    EliseProject::save(path,
+        {
+            json_data,
+            audio_manager.getMP3Data()
+        }
+    );
+
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project have been saved"});
 }
 
 void EliseApp::export_project(const std::string &path) {
@@ -1111,11 +1197,32 @@ void EliseApp::update_dialogs() {
         is_export_video_dialog_active = false;
     }
 
+    if (open_full_project_dialog && open_full_project_dialog->ready()) {
+        auto filename = open_full_project_dialog->result();
+        if (filename.size() > 0) {
+            load_full_project(filename.at(0));
+        }
+        open_full_project_dialog.reset();
+        is_open_full_project_dialog_active = false;
+    }
+
+    if (save_full_project_dialog && save_full_project_dialog->ready()) {
+        auto filename = save_full_project_dialog->result();
+        if(filename.length() > 0) {
+            filename = ensure_extension(filename, ".eliseproj");
+            save_full_project(filename);
+        }
+        save_full_project_dialog.reset();
+        is_save_full_project_dialog_active = false;
+    }
+
     is_dialog_opened = is_open_project_dialog_active
                         || is_load_song_dialog_active
                         || is_save_project_dialog_active
                         || is_export_project_dialog_active
-                        || is_export_video_dialog_active;
+                        || is_export_video_dialog_active
+                        || is_open_full_project_dialog_active
+                        || is_save_full_project_dialog_active;
 }
 
 void EliseApp::copy_color(const Color &color) {

@@ -9,6 +9,7 @@
 #include "../libs/kiss_fft.hh"
 #include "../libs/miniaudio.h"
 #include <thread>
+#include "file_utils.h"
 
 
 
@@ -19,6 +20,7 @@ public:
 
     bool loadMP3(const std::string& path);
     bool loadMP3(std::vector<unsigned char>& data);
+    std::vector<unsigned char> getMP3Data();
 
     const std::vector<float>& getOriginalSamples() const;
     int getSampleRate() const;
@@ -48,6 +50,8 @@ private:
 
     std::atomic<bool> is_playing{false};
     std::atomic<uint64_t> playheadPosition{0};
+
+    std::vector<unsigned char> mp3_file_data;
 
 
 

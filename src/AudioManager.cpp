@@ -20,6 +20,11 @@ AudioManager::~AudioManager() {
 }
 
 bool AudioManager::loadMP3(const std::string& path) {
+
+    mp3_file_data = loadFileToVector(path);
+    loadMP3(mp3_file_data);
+
+    /* To ensure compatibility in case of breaking
     mp3_path = path;
     ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 1, sample_rate);
     ma_decoder decoder;
@@ -41,10 +46,13 @@ bool AudioManager::loadMP3(const std::string& path) {
     ma_free(audioData, nullptr);
     ma_decoder_uninit(&decoder);
 
+    */
     return true;
 }
 
 bool AudioManager::loadMP3(std::vector<unsigned char> &data) {
+    mp3_file_data = data;
+
     ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 1, sample_rate);
     ma_decoder decoder;
 
@@ -66,6 +74,10 @@ bool AudioManager::loadMP3(std::vector<unsigned char> &data) {
     ma_decoder_uninit(&decoder);
 
     return true;
+}
+
+std::vector<unsigned char> AudioManager::getMP3Data() {
+    return mp3_file_data;
 }
 
 const std::vector<float> & AudioManager::getOriginalSamples() const {

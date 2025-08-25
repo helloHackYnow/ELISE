@@ -4,6 +4,7 @@
 
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H
+#include <fstream>
 #include <string>
 
 inline std::string ensure_extension(const std::string& path, const std::string& extension) {
@@ -19,6 +20,27 @@ inline std::string ensure_extension(const std::string& path, const std::string& 
     }
 
     return path + extension;
+}
+
+inline std::vector<unsigned char> loadFileToVector(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    if (!file) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    // Get the size of the file
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // Create a vector with the appropriate size
+    std::vector<unsigned char> buffer(size);
+
+    // Read file data into the vector
+    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+        throw std::runtime_error("Error reading file: " + filename);
+    }
+
+    return buffer;
 }
 
 #endif //FILE_UTILS_H

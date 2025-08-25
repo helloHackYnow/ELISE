@@ -263,7 +263,7 @@ void from_json(const json &j, ProjectData &p) {
     }
 }
 
-ProjectData load(const std::string &path) {
+ProjectData load_from_path(const std::string &path) {
     std::ifstream file(path);
 
     ProjectData p;
@@ -283,6 +283,16 @@ ProjectData load(const std::string &path) {
     }
 
     file.close();
+    return p;
+}
+
+
+ProjectData load_from_data(const std::vector<unsigned char>& data) {
+    std::string json_str(data.begin(), data.end());
+    ProjectData p;
+    json j;
+    auto jj = j.parse(json_str);
+    p = jj;
     return p;
 }
 

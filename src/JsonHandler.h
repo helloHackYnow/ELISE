@@ -59,7 +59,8 @@ void from_json(const json& j, JsonKeyframes& k);
 void to_json(json& j, const ProjectData& p);
 void from_json(const json& j, ProjectData& p);
 
-ProjectData load(const std::string& path);
+ProjectData load_from_path(const std::string& path);
+ProjectData load_from_data(const std::vector<unsigned char>& data);
 void save(const std::string& path, const ProjectData& data);
 
 

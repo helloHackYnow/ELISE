@@ -5,3 +5,7 @@
 [submodule "glfw"]
 	path = glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "minizip-ng"]
+	path = minizip-ng
+	url = https://github.com/zlib-ng/minizip-ng.git
+    branch = master
