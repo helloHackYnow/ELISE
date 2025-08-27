@@ -1063,7 +1063,7 @@ void EliseApp::load_project(const std::string &path) {
         is_loaded_from_file = true;
         filepath = path;
 
-        ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project was loaded !"});
+        ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project has been loaded !"});
     }
 }
 
@@ -1091,7 +1091,7 @@ void EliseApp::load_full_project(const std::string &path) {
     sample_rate = audio_manager.getSampleRate();
     sample_count = data.size();
 
-    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project have been loaded !"});
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project has been loaded !"});
 }
 
 void EliseApp::save_full_project(const std::string &path) {
@@ -1120,7 +1120,7 @@ void EliseApp::save_full_project(const std::string &path) {
         }
     );
 
-    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project have been saved"});
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The full project has been saved"});
 }
 
 void EliseApp::export_project(const std::string &path) {
