@@ -1091,7 +1091,7 @@ void EliseApp::load_full_project(const std::string &path) {
     sample_rate = audio_manager.getSampleRate();
     sample_count = data.size();
 
-    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The project has been loaded !"});
+    ImGui::InsertNotification({ImGuiToastType::Info, 3000, "The full project has been loaded !"});
 }
 
 void EliseApp::save_full_project(const std::string &path) {
