@@ -212,6 +212,9 @@ void EliseApp::init_groups() {
     new_group("Vertical Mid", {5, 6});
     new_group("Down", {7, 8, 9, 10, 11});
 
+    new_group("Z-Top", {0, 1, 2, 3, 4, 5, 6});
+    new_group("Z-Bottom", {7, 8, 9, 10, 11});
+
     new_group("Left", {0, 1, 2, 5, 7, 8});
     new_group("Right", {3, 4, 6, 9, 10, 11});
 
@@ -360,6 +363,7 @@ void EliseApp::draw_menu_bar() {
             ImGui::Separator();
             if (ImGui::MenuItem("Export script")) on_export();
             if (ImGui::MenuItem("Export video")) on_export_video();
+            if (ImGui::MenuItem("Export audio")) on_export_audio();
 
             ImGui::EndMenu();
         }
@@ -963,6 +967,15 @@ void EliseApp::on_export_video() {
     is_export_video_dialog_active = true;
 }
 
+void EliseApp::on_export_audio() {
+    export_audio_dialog = std::make_unique<pfd::save_file>(
+        "Export the audio track",
+        "",
+        std::vector<std::string>{"MP3 file", "*.mp3"},
+        pfd::opt::none);
+    is_export_audio_dialog_active = true;
+}
+
 void EliseApp::on_r() {
     compile_commands();
     light_manager.update(waveform_viewer.get_cursor_position());
@@ -1148,6 +1161,10 @@ void EliseApp::load_song(const std::string &path) {
     sample_count = data.size();
 }
 
+void EliseApp::export_audio(const std::string &path) {
+    saveVectorToFile(path, audio_manager.getMP3Data());
+}
+
 void EliseApp::update_dialogs() {
     if (open_project_dialog && open_project_dialog->ready()) {
         auto filename = open_project_dialog->result();
@@ -1216,13 +1233,24 @@ void EliseApp::update_dialogs() {
         is_save_full_project_dialog_active = false;
     }
 
+    if (export_audio_dialog && export_audio_dialog->ready()) {
+        auto filename = export_audio_dialog->result();
+        if(filename.length() > 0) {
+            filename = ensure_extension(filename, ".mp3");
+            export_audio(filename);
+        }
+        export_audio_dialog.reset();
+        is_export_audio_dialog_active = false;
+    }
+
     is_dialog_opened = is_open_project_dialog_active
                         || is_load_song_dialog_active
                         || is_save_project_dialog_active
                         || is_export_project_dialog_active
                         || is_export_video_dialog_active
                         || is_open_full_project_dialog_active
-                        || is_save_full_project_dialog_active;
+                        || is_save_full_project_dialog_active
+                        || is_export_audio_dialog_active;
 }
 
 void EliseApp::copy_color(const Color &color) {

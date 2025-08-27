@@ -97,6 +97,7 @@ private:
     void on_export();
     void on_load_song();
     void on_export_video();
+    void on_export_audio();
 
     void on_r();
     void on_ctrl_z();
@@ -112,6 +113,7 @@ private:
     void save_full_project(const std::string& path);
     void export_project(const std::string& path);
     void load_song(const std::string& path);
+    void export_audio(const std::string& path);
 
     void update_dialogs();
 
@@ -181,6 +183,9 @@ private:
 
     std::unique_ptr<pfd::save_file> save_full_project_dialog;
     bool is_save_full_project_dialog_active = false;
+
+    std::unique_ptr<pfd::save_file> export_audio_dialog;
+    bool is_export_audio_dialog_active = false;
 
     // Save / filename
     bool is_loaded_from_full_project_file = false;

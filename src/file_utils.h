@@ -43,4 +43,22 @@ inline std::vector<unsigned char> loadFileToVector(const std::string& filename) 
     return buffer;
 }
 
+inline void saveVectorToFile(const std::string& filename, const std::vector<unsigned char>& data) {
+    std::ofstream file(filename, std::ios::binary | std::ios::trunc);
+    if (!file) {
+        throw std::runtime_error("Unable to open file for writing: " + filename);
+    }
+
+    if (!data.empty()) {
+        file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+        if (!file) {
+            throw std::runtime_error("Error writing to file: " + filename);
+        }
+    } else {
+        // ensure the file is truncated when data is empty (std::ios::trunc already does that)
+        file.flush();
+        if (!file) throw std::runtime_error("Error flushing empty file: " + filename);
+    }
+}
+
 #endif //FILE_UTILS_H
