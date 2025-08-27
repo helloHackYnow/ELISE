@@ -212,8 +212,8 @@ void EliseApp::init_groups() {
     new_group("Vertical Mid", {5, 6});
     new_group("Down", {7, 8, 9, 10, 11});
 
-    new_group("Z-Top", {0, 1, 2, 3, 4, 5, 6});
-    new_group("Z-Bottom", {7, 8, 9, 10, 11});
+    new_group("Z-Top", {0, 1, 2, 3, 4, 5});
+    new_group("Z-Bottom", {6, 7, 8, 9, 10, 11});
 
     new_group("Left", {0, 1, 2, 5, 7, 8});
     new_group("Right", {3, 4, 6, 9, 10, 11});
@@ -716,6 +716,11 @@ void EliseApp::draw_command_edition_window() {
         }
     }
 
+    ImGui::End();
+}
+
+void EliseApp::draw_group_edition_window() {
+    ImGui::Begin("Group edition");
     ImGui::End();
 }
 

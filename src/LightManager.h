@@ -10,9 +10,16 @@
 #include "imgui.h"
 #include "InterpolationUtils.h"
 
+
+
 struct Group {
     std::string name;
     std::vector<size_t> lights;
+};
+
+struct LightConfig {
+    int light_count;
+    std::vector<Group> groups;
 };
 
 struct Color {

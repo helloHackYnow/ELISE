@@ -62,6 +62,7 @@ private:
     void draw_viewport();
     void draw_keyframe_edition_window();
     void draw_command_edition_window();
+    void draw_group_edition_window();
 
     void handle_input();
 
