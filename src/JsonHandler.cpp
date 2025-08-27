@@ -205,7 +205,8 @@ void to_json(json &j, const JsonKeyframes &k) {
     j = json{
         {"trigger_sample", k.trigger_sample},
         {"commands", k.commands},
-            {"locked", k.locked}
+        {"locked", k.locked},
+        {"enabled", k.enabled}
     };
 }
 
@@ -216,6 +217,12 @@ void from_json(const json &j, JsonKeyframes &k) {
         j.at("locked").get_to(k.locked);
     } catch (...) {
         k.locked = false;
+    }
+
+    try {
+        j.at("enabled").get_to(k.enabled);
+    } catch (...) {
+        k.locked = true;
     }
 }
 
@@ -228,6 +235,7 @@ void to_json(json &j, const ProjectData &p) {
         json_keyframe.trigger_sample = keyframe.trigger_sample;
         json_keyframe.commands = p.keyframe_uuid_to_commands.at(keyframe.uuid);
         json_keyframe.locked = keyframe.is_locked;
+        json_keyframe.enabled = keyframe.is_enabled;
         json_keyframes.push_back(json_keyframe);
     }
 
@@ -254,7 +262,7 @@ void from_json(const json &j, ProjectData &p) {
     for (auto & json_keyframe: json_keyframes) {
         Keyframe keyframe;
         keyframe.is_locked = json_keyframe.locked;
-        keyframe.is_enabled = true;
+        keyframe.is_enabled = json_keyframe.enabled;
         keyframe.trigger_sample = json_keyframe.trigger_sample;
         keyframe.uuid = uuid++;
         p.keyframes.push_back(keyframe);
