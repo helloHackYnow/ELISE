@@ -191,7 +191,7 @@ struct AnimationDesc {
 struct Command {
     AnimationDesc animation;
     int64_t trigger_sample;
-    int group_id;
+    int group_id = 12;
 
      bool operator==(const Command &other) const {
         return
