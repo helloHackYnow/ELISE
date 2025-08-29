@@ -235,6 +235,7 @@ public:
     // Must be ordered by trigger time. The last at [0], the first at [size-1]
     void setCommandStack(const std::vector<Command>& commands);
 
+    void resetGroups();
     void reset();
 
     const std::vector<Color>& getLightStates();

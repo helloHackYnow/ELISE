@@ -87,6 +87,7 @@ private:
 
     void update_keyframes();
 
+    void build_group_index_to_rank();
     void new_group(const std::string& name, const std::vector<size_t>& ids);
 
     void on_save();
@@ -142,6 +143,11 @@ private:
 
     Odin::Renderer renderer;
 
+    // Map the index of the light group to its position in the group selector
+    std::vector<int> group_index_to_rank;
+
+    // Map the position of the light group in the group selector to its index
+    std::vector<int> group_rank_to_index;
     int light_count = 12;
     std::vector<Group> groups;
 

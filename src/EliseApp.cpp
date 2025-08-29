@@ -244,6 +244,11 @@ void EliseApp::init_light_manager() {
 void EliseApp::compile_commands() {
     std::vector<Command> commands;
 
+    light_manager.reset();
+    light_manager.resetGroups();
+
+    init_light_manager();
+
     i_s.order_keyframes();
     for (auto & keyframe: i_s.keyframes) {
         for (auto & command: i_s.keyframe_uuid_to_commands[keyframe.uuid]) {
@@ -612,6 +617,7 @@ void EliseApp::draw_command_edition_window() {
             ImGui::Spacing();
             ImGui::Separator();
 
+
             if (ImGui::BeginCombo("Group", groups[command.group_id].name.c_str())) {
                 for (int n = 0; n < groups.size(); n++) {
                     const bool is_selected = (command.group_id == n);
@@ -721,6 +727,28 @@ void EliseApp::draw_command_edition_window() {
 
 void EliseApp::draw_group_edition_window() {
     ImGui::Begin("Group edition");
+    ImGui::PushItemFlag(ImGuiItemFlags_AllowDuplicateId, true);
+
+    static const char* item_names[] = { "Item One", "Item Two", "Item Three", "Item Four", "Item Five" };
+    for (int n = 0; n < IM_ARRAYSIZE(item_names); n++)
+    {
+        const char* item = item_names[n];
+        ImGui::Selectable(item);
+
+        if (ImGui::IsItemActive() && !ImGui::IsItemHovered())
+        {
+            int n_next = n + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+            if (n_next >= 0 && n_next < IM_ARRAYSIZE(item_names))
+            {
+                item_names[n] = item_names[n_next];
+                item_names[n_next] = item;
+                ImGui::ResetMouseDragDelta();
+            }
+        }
+    }
+
+    ImGui::PopItemFlag();
+    ImGui::TreePop();
     ImGui::End();
 }
 
@@ -891,8 +919,17 @@ void EliseApp::update_keyframes() {
     waveform_viewer.set_keyframes(waveform_keyframes);
 }
 
+void EliseApp::build_group_index_to_rank() {
+    group_index_to_rank.assign(groups.size(), 0);
+    for (int i = 0; i < groups.size(); ++i) {
+        group_index_to_rank.at(group_rank_to_index.at(i)) = i;
+    }
+}
+
 void EliseApp::new_group(const std::string &name, const std::vector<size_t> &ids) {
     groups.push_back(Group(name, ids));
+    group_rank_to_index.push_back(group_rank_to_index.size());
+    build_group_index_to_rank();
 }
 
 void EliseApp::on_save() {

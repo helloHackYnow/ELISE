@@ -129,6 +129,10 @@ void LightManager::setCommandStack(const std::vector<Command> &commands) {
     this->commands = commands;
 }
 
+void LightManager::resetGroups() {
+    group_ids.clear();
+}
+
 void LightManager::reset() {
     for (auto& light : lights) {
         light = AnimationDesc{};
