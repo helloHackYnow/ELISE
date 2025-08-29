@@ -17,7 +17,7 @@ inline float ease_in(float t) {
 }
 
 inline float ease_out(float t) {
-    return (1 - t) * (1 - t) * (1 - t);
+    return 1 - (1 - t) * (1 - t) * (1 - t) ;
 }
 
 inline float ease_in_out(float t) {
