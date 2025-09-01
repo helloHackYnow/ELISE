@@ -236,6 +236,7 @@ public:
     void setCommandStack(const std::vector<Command>& commands);
 
     void resetGroups();
+    void resetLight();
     void reset();
 
     const std::vector<Color>& getLightStates();

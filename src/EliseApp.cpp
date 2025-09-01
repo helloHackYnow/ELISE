@@ -245,6 +245,7 @@ void EliseApp::compile_commands() {
     std::vector<Command> commands;
 
     light_manager.reset();
+    light_manager.resetLight();
     light_manager.resetGroups();
 
     init_light_manager();

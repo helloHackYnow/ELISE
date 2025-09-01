@@ -133,6 +133,11 @@ void LightManager::resetGroups() {
     group_ids.clear();
 }
 
+void LightManager::resetLight() {
+    lights.clear();
+    light_states.clear();
+}
+
 void LightManager::reset() {
     for (auto& light : lights) {
         light = AnimationDesc{};
