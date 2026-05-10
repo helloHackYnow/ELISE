@@ -26,7 +26,7 @@ std::string get_python_color(const Color &color) {
         std::to_string(color.b) + ", " + std::to_string(color.a) + ")";
 }
 
-int sample_to_ms(int sample, int sample_rate) {
+int64_t sample_to_ms(int64_t sample, int64_t sample_rate) {
     return sample * 1000 / sample_rate;
 }
 
@@ -34,7 +34,7 @@ std::string get_group_str(size_t group_id) {
     return "group_" + std::to_string(group_id);
 }
 
-std::string get_python_command(const Command &command, int sample_rate) {
+std::string get_python_command(const Command &command, int64_t sample_rate) {
     switch (command.animation.kind) {
         case AnimationKind::gradient: {
             std::string cmd = "gradient(";
@@ -117,8 +117,10 @@ std::string generate_python_script(const ProjectData &data) {
 
     // Generate commands
     for (auto & keyframe: data.keyframes) {
-        for (auto &command: data.keyframe_uuid_to_commands.at(keyframe.uuid) ) {
-            out += tab + get_python_command(command, data.sample_rate) + new_line;
+        if (keyframe.is_enabled) {
+            for (auto &command: data.keyframe_uuid_to_commands.at(keyframe.uuid) ) {
+                out += tab + get_python_command(command, data.sample_rate) + new_line;
+            }
         }
         out += new_line;
     }
