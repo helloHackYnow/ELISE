@@ -12,6 +12,9 @@ endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+# Fix NixOS PIE issue
+set(CMAKE_EXE_LINKER_FLAGS "-no-pie")
+
 # Add GLFW submodule
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
