@@ -27,6 +27,9 @@ set(MZ_LZMA OFF CACHE BOOL "" FORCE)
 set(MZ_BZIP2 OFF CACHE BOOL "" FORCE)
 set(MZ_ZSTD OFF CACHE BOOL "" FORCE)
 set(MZ_ZLIB ON CACHE BOOL "" FORCE) # Let it fetch zlib automatically if needed
+
+# ADD THIS LINE TO DISABLE OPENSSL:
+set(MZ_OPENSSL OFF CACHE BOOL "" FORCE)
 add_subdirectory(minizip-ng)
 
 
