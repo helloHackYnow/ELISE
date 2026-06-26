@@ -59,7 +59,7 @@ function(setup_ffmpeg_simple)
         # Download FFmpeg if not present
         if(NOT EXISTS "${FFMPEG_DIR}")
             message(STATUS "Downloading FFmpeg...")
-            set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip")
+            set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-08-31-13-00/ffmpeg-N-120856-g9893d66add-win64-gpl-shared.zip")
             set(FFMPEG_ARCHIVE "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg.zip")
 
             file(DOWNLOAD "${FFMPEG_URL}" "${FFMPEG_ARCHIVE}" SHOW_PROGRESS)
