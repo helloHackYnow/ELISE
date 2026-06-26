@@ -20,9 +20,14 @@ jobs:
 
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
+      # 1. Install a static version of Zlib for Windows (takes ~10 seconds)
+      - name: Install Zlib via vcpkg
+        run: vcpkg install zlib:x64-windows-static
 
+      # 2. Tell CMake to use the vcpkg toolchain to find it
       - name: Configure CMake
-        run: cmake -B build
+        run: cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static
+
 
       - name: Build
         run: cmake --build build --config Release
